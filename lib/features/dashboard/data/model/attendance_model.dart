@@ -13,6 +13,9 @@ class AttendanceModel {
   final double checkInLatitude;
   final double checkInLongitude;
   final num checkInAccuracyM;
+  final double? checkOutLatitude;
+  final double? checkoutLongitude;
+  final double? checkoutAccuracyM;
 
   const AttendanceModel({
     required this.id,
@@ -23,6 +26,9 @@ class AttendanceModel {
     required this.checkInLatitude,
     required this.checkInLongitude,
     required this.checkInAccuracyM,
+    this.checkOutLatitude,
+    this.checkoutLongitude,
+    this.checkoutAccuracyM,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) =>
@@ -39,6 +45,10 @@ class AttendanceModel {
       checkInLongitude: checkInLongitude,
       checkInAccuracyM: checkInAccuracyM,
       workDate: workDate,
+      checkoutLatitude: checkOutLatitude,
+      checkoutLongitude: checkoutLongitude,
+      checkout: checkOut,
+      checkoutOutAccuracyM: checkoutAccuracyM,
     );
   }
 }

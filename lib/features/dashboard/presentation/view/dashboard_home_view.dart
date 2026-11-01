@@ -1,7 +1,7 @@
-import 'dart:async';
-
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
+import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
+import 'package:attendance_flutter/features/dashboard/presentation/view_model/state/attendance_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,20 +16,52 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
   @override
   Widget build(BuildContext context) {
     final attendanceState = ref.watch(attendanceViewModelProvider);
-    final now = DateTime.now();
+    final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+    ref.listen<AttendanceState>(attendanceViewModelProvider, (previous, next) {
+      if (previous?.successMessage != next.successMessage &&
+          next.successMessage != null) {
+        AppSnackBar.success(context, next.successMessage!);
+      }
+      if (previous?.errorMessage != next.errorMessage &&
+          next.errorMessage != null) {
+        AppSnackBar.error(context, next.errorMessage!);
+      }
+    });
+
+    final clockInAt = attendanceState.attendance == null
+        ? null
+        : DateTimeUtils.parseBackendDateTime(
+            attendanceState.attendance!.checkIn,
+          );
+    final clockOutAt = attendanceState.attendance == null
+        ? null
+        : DateTimeUtils.parseBackendDateTime(
+            attendanceState.attendance!.checkout,
+          );
+    final isClockedIn = clockInAt != null && clockOutAt == null;
+    final elapsed = clockInAt == null
+        ? Duration.zero
+        : (clockOutAt ?? now).difference(clockInAt);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
         _PageIntro(date: now),
         const SizedBox(height: 22),
         _AttendanceCard(
-          isClockedIn: _isClockedIn,
-          clockInAt: DateTime.parse(attendanceState.attendance!.checkIn),
-          elapsed: _elapsed,
+          isClockedIn: isClockedIn,
+          isLoading: attendanceState.isLoading,
+          clockInAt: clockInAt,
+          elapsed: elapsed,
           onToggle: () {
-            ref
-                .read(attendanceViewModelProvider.notifier)
-                .clockInEvent(latitude: 17.06, longitude: 85.04, accuracy: 50);
+            final attendanceViewModel = ref.read(
+              attendanceViewModelProvider.notifier,
+            );
+            if (isClockedIn) {
+              attendanceViewModel.clockOutAttendance();
+            } else {
+              attendanceViewModel.clockInAttendance();
+            }
           },
         ),
         const SizedBox(height: 24),
@@ -77,7 +109,7 @@ class _PageIntro extends StatelessWidget {
           ),
         ),
         Text(
-          _formatDate(date),
+          DateTimeUtils.formatDate(date),
           textAlign: TextAlign.right,
           style: const TextStyle(
             color: Color(0xFF667085),
@@ -93,12 +125,14 @@ class _PageIntro extends StatelessWidget {
 class _AttendanceCard extends StatelessWidget {
   const _AttendanceCard({
     required this.isClockedIn,
+    required this.isLoading,
     required this.clockInAt,
     required this.elapsed,
     required this.onToggle,
   });
 
   final bool isClockedIn;
+  final bool isLoading;
   final DateTime? clockInAt;
   final Duration elapsed;
   final VoidCallback onToggle;
@@ -175,7 +209,7 @@ class _AttendanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           GestureDetector(
-            onTap: onToggle,
+            onTap: isLoading ? null : onToggle,
             child: Container(
               width: 178,
               height: 178,
@@ -203,16 +237,30 @@ class _AttendanceCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      isClockedIn
-                          ? Icons.stop_circle_outlined
-                          : Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 34,
-                    ),
+                    if (isLoading)
+                      const SizedBox(
+                        width: 34,
+                        height: 34,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    else
+                      Icon(
+                        isClockedIn
+                            ? Icons.stop_circle_outlined
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 34,
+                      ),
                     const SizedBox(height: 5),
                     Text(
-                      isClockedIn ? 'Clock out' : 'Clock in',
+                      isLoading
+                          ? 'Getting location...'
+                          : isClockedIn
+                          ? 'Clock out'
+                          : 'Clock in',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -222,7 +270,7 @@ class _AttendanceCard extends StatelessWidget {
                     if (isClockedIn) ...[
                       const SizedBox(height: 3),
                       Text(
-                        _formatDuration(elapsed),
+                        DateTimeUtils.formatDuration(elapsed),
                         style: const TextStyle(
                           color: Color(0xD9FFFFFF),
                           fontSize: 12,
@@ -236,8 +284,10 @@ class _AttendanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            isClockedIn
-                ? 'You started at ${_formatTime(clockInAt!)}'
+            isLoading
+                ? 'Please wait while we verify your location'
+                : isClockedIn
+                ? 'You started at ${DateTimeUtils.formatTime(clockInAt!)}'
                 : 'Tap the button when you start your workday',
             style: const TextStyle(color: Color(0xFF667085), fontSize: 12),
           ),
@@ -410,39 +460,4 @@ class _OverviewGrid extends StatelessWidget {
       },
     );
   }
-}
-
-String _formatTime(DateTime value) {
-  final hour = value.hour == 0
-      ? 12
-      : value.hour > 12
-      ? value.hour - 12
-      : value.hour;
-  final minute = value.minute.toString().padLeft(2, '0');
-  final period = value.hour >= 12 ? 'PM' : 'AM';
-  return '$hour:$minute $period';
-}
-
-String _formatDuration(Duration duration) {
-  final hours = duration.inHours.toString().padLeft(2, '0');
-  final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
-  return '$hours:$minutes';
-}
-
-String _formatDate(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${months[date.month - 1]} ${date.day}, ${date.year}';
 }

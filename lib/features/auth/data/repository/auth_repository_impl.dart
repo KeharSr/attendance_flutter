@@ -24,13 +24,16 @@ class AuthRepositoryImpl implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> loginUser({
+  Future<Either<Failure, AuthEntity>> loginUser({
     required String phone,
     required String password,
   }) async {
     try {
-      await _authDataSource.loginUser(phone: phone, password: password);
-      return Right((true));
+      final result = await _authDataSource.loginUser(
+        phone: phone,
+        password: password,
+      );
+      return Right(result.toEntity());
     } catch (e) {
       return Left((ServerFailure(message: e.toString())));
     }

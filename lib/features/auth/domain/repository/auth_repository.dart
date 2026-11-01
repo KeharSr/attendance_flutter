@@ -4,7 +4,7 @@ import 'package:dartz/dartz.dart';
 
 abstract class IAuthRepository {
   Future<Either<Failure, AuthEntity>> createUser(AuthEntity user);
-  Future<Either<Failure, bool>> loginUser({
+  Future<Either<Failure, AuthEntity>> loginUser({
     required String phone,
     required String password,
   });

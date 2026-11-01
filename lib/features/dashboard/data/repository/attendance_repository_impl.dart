@@ -29,4 +29,25 @@ class AttendanceRepositoryImpl implements IAttendanceRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, AttendanceEntity>> clockOutEvent({
+    required double latitude,
+    required double longitude,
+    required num accuracy,
+  }) async {
+    try {
+      final result = await _attendanceDataSource.clockOut(
+        latitude: latitude,
+        longitude: longitude,
+        accuracy: accuracy,
+      );
+
+      final resultToEntity = result.toEntity();
+
+      return Right((resultToEntity));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 }

@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import 'api_endpoints.dart';
 import 'api_exception.dart';
 
 class ApiClient {
-  ApiClient({Dio? dio})
+  ApiClient({Dio? dio, Future<void> Function()? onUnauthorized})
     : _dio =
           dio ??
           Dio(
@@ -19,6 +20,7 @@ class ApiClient {
               },
             ),
           ) {
+    _dio.interceptors.add(PrettyDioLogger());
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -26,7 +28,16 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
           handler.next(options);
+        },
+        onError: (exception, handler) async {
+          if (exception.response?.statusCode == 401) {
+            await onUnauthorized?.call();
+          }
+          handler.next(exception);
         },
       ),
     );

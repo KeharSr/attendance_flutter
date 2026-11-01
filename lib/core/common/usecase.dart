@@ -8,3 +8,7 @@ abstract interface class UsecaseWithOutParams<SuccessType> {
 abstract interface class UsecaseWithParams<SuccessType, Params> {
   Future<Either<Failure, SuccessType>> call(Params params);
 }
+
+abstract interface class UsecaseWithOutParamsList<SuccessType> {
+  Future<Either<Failure, List<SuccessType>>> call();
+}

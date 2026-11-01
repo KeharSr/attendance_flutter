@@ -6,4 +6,10 @@ abstract interface class IAttendanceDataSource {
     required double longitude,
     required num accuracy,
   });
+
+  Future<AttendanceModel> clockOut({
+    required double latitude,
+    required double longitude,
+    required num accuracy,
+  });
 }

@@ -16,6 +16,9 @@ AttendanceModel _$AttendanceModelFromJson(Map<String, dynamic> json) =>
       checkInLatitude: (json['check_in_latitude'] as num).toDouble(),
       checkInLongitude: (json['check_in_longitude'] as num).toDouble(),
       checkInAccuracyM: json['check_in_accuracy_m'] as num,
+      checkOutLatitude: (json['check_out_latitude'] as num?)?.toDouble(),
+      checkoutLongitude: (json['checkout_longitude'] as num?)?.toDouble(),
+      checkoutAccuracyM: (json['checkout_accuracy_m'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$AttendanceModelToJson(AttendanceModel instance) =>
@@ -28,4 +31,7 @@ Map<String, dynamic> _$AttendanceModelToJson(AttendanceModel instance) =>
       'check_in_latitude': instance.checkInLatitude,
       'check_in_longitude': instance.checkInLongitude,
       'check_in_accuracy_m': instance.checkInAccuracyM,
+      'check_out_latitude': instance.checkOutLatitude,
+      'checkout_longitude': instance.checkoutLongitude,
+      'checkout_accuracy_m': instance.checkoutAccuracyM,
     };

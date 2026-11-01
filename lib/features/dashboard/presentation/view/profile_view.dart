@@ -1,4 +1,6 @@
+import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -46,12 +48,20 @@ class ProfileView extends StatelessWidget {
               onTap: () {},
             ),
             const Divider(height: 1, indent: 56),
-            _ProfileAction(
-              icon: Icons.logout_rounded,
-              title: 'Sign out',
-              subtitle: 'End your current session',
-              color: const Color(0xFFB42318),
-              onTap: () {},
+            Consumer(
+              builder: (context, ref, child) {
+                return _ProfileAction(
+                  icon: Icons.logout_rounded,
+                  title: 'Sign out',
+                  subtitle: 'End your current session',
+                  color: const Color(0xFFB42318),
+                  onTap: () {
+                    ref.read(apiClientProvider).clearAuthToken();
+                    ref.read(appSharedPrefsProvider).removeSession();
+                    ref.read(authSessionProvider.notifier).markLoggedOut();
+                  },
+                );
+              },
             ),
           ],
         ),

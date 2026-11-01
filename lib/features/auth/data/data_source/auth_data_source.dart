@@ -2,13 +2,19 @@ import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/core/api/api_response.dart';
+import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
 import 'package:attendance_flutter/features/auth/data/data_source/abstract_auth_data_source.dart';
 import 'package:attendance_flutter/features/auth/data/model/auth_api_model.dart';
 
 class AuthDataSource implements IAuthDataSource {
-  AuthDataSource({required this._apiClient});
+  AuthDataSource({
+    required ApiClient apiClient,
+    required AppSharedPrefs appSharedPrefs,
+  }) : _apiClient = apiClient,
+       _appSharedPrefs = appSharedPrefs;
 
   final ApiClient _apiClient;
+  final AppSharedPrefs _appSharedPrefs;
 
   @override
   Future<ApiResponse<AuthApiModel>> createUser(AuthApiModel model) async {
@@ -52,6 +58,7 @@ class AuthDataSource implements IAuthDataSource {
 
     final extractedToken = response.data['data']["token"];
     _apiClient.setAuthToken(extractedToken);
+    await _appSharedPrefs.saveAuthToken(extractedToken);
     return AuthApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 }

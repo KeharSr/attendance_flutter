@@ -2,6 +2,8 @@ import 'package:attendance_flutter/features/dashboard/domain/entity/attendance_e
 import 'package:equatable/equatable.dart';
 
 class AttendanceState extends Equatable {
+  static const _notProvided = Object();
+
   final bool isLoading;
   final String? errorMessage;
   final String? successMessage;
@@ -25,15 +27,21 @@ class AttendanceState extends Equatable {
 
   AttendanceState copyWith({
     bool? isLoading,
-    String? errorMessage,
-    String? successMessage,
-    AttendanceEntity? attendance,
+    Object? errorMessage = _notProvided,
+    Object? successMessage = _notProvided,
+    Object? attendance = _notProvided,
   }) {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
-       errorMessage: errorMessage ?? this.errorMessage,
-      successMessage: successMessage ?? this.successMessage,
-      attendance: attendance ?? this.attendance,
+      errorMessage: identical(errorMessage, _notProvided)
+          ? this.errorMessage
+          : errorMessage as String?,
+      successMessage: identical(successMessage, _notProvided)
+          ? this.successMessage
+          : successMessage as String?,
+      attendance: identical(attendance, _notProvided)
+          ? this.attendance
+          : attendance as AttendanceEntity?,
     );
   }
 

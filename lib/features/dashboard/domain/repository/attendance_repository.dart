@@ -8,4 +8,10 @@ abstract interface class IAttendanceRepository {
     required double longitude,
     required num accuracy,
   });
+
+  Future<Either<Failure, AttendanceEntity>> clockOutEvent({
+    required double latitude,
+    required double longitude,
+    required num accuracy,
+  });
 }

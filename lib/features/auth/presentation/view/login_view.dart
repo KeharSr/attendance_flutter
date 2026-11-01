@@ -26,6 +26,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       if (next.successMessage != null &&
           next.successMessage != previous?.successMessage) {
         final message = next.successMessage!;
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
             builder: (_) => DashboardView(message: message),

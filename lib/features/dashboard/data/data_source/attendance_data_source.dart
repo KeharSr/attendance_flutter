@@ -28,4 +28,26 @@ class AttendanceDataSource implements IAttendanceDataSource {
       newResponse["data"] as Map<String, dynamic>,
     );
   }
+
+  @override
+  Future<AttendanceModel> clockOut({
+    required double latitude,
+    required double longitude,
+    required num accuracy,
+  }) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.clockOut,
+      data: {
+        "location": {
+          "latitude": latitude,
+          "longitude": longitude,
+          "accuracy": accuracy,
+        },
+      },
+    );
+    final newResponse = response.data;
+    return AttendanceModel.fromJson(
+      newResponse["data"] as Map<String, dynamic>,
+    );
+  }
 }

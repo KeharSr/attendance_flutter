@@ -1,8 +1,8 @@
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_home_view.dart';
-import 'package:attendance_flutter/features/dashboard/presentation/view/leave_view.dart';
-import 'package:attendance_flutter/features/dashboard/presentation/view/missing_attendance_view.dart';
-import 'package:attendance_flutter/features/dashboard/presentation/view/overtime_view.dart';
+import 'package:attendance_flutter/features/leave/presentation/view/leave_view.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/view/missing_attendance_view.dart';
+import 'package:attendance_flutter/features/overtime/presentation/view/overtime_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/profile_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
@@ -48,9 +48,9 @@ class _DashboardViewState extends State<DashboardView> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: const Color(0xFFF3F7FC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
@@ -72,8 +72,17 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: IndexedStack(index: _currentIndex, children: pages),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF3F7FC), Color(0xFFEAF2FC)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: IndexedStack(index: _currentIndex, children: pages),
+        ),
       ),
       bottomNavigationBar: CustomNavigationBar(
         currentIndex: _currentIndex,

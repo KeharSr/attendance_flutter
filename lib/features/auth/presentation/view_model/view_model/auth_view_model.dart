@@ -76,11 +76,19 @@ class AuthViewModel extends Notifier<AuthState> {
           isLoading: false,
         );
       },
-      (success) {
+      (user) async {
+        await ref
+            .read(appSharedPrefsProvider)
+            .saveUserSession(
+              userId: user.id ?? '',
+              name: user.name,
+              phone: user.phone,
+            );
         state = state.copyWith(
           successMessage: 'Login successful',
           errorMessage: null,
           isLoading: false,
+          user: user,
         );
       },
     );
