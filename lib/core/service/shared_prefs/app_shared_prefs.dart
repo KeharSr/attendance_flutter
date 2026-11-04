@@ -33,6 +33,10 @@ class AppSharedPrefs {
     return _sharedPreferences.getString(SharedPrefsKeys.userNameKey);
   }
 
+  String? getUserPhone() {
+    return _sharedPreferences.getString(SharedPrefsKeys.userPhoneKey);
+  }
+
   String? getUserId() {
     return _sharedPreferences.getString(SharedPrefsKeys.userIdKey);
   }

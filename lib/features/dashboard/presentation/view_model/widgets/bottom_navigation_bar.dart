@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:attendance_flutter/core/common/app_theme.dart';
 
 class CustomNavigationBar extends StatelessWidget {
   const CustomNavigationBar({
@@ -6,106 +7,77 @@ class CustomNavigationBar extends StatelessWidget {
     required this.onDestinationSelected,
     super.key,
   });
-
   final int currentIndex;
   final ValueChanged<int> onDestinationSelected;
 
   @override
-  Widget build(BuildContext context) {
-    final selectedColor = const Color(0xFF1769E0);
-    return BottomAppBar(
-      height: 76,
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
       color: Colors.white,
-      elevation: 10,
-      shadowColor: const Color(0x22102A43),
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _Destination(
-            icon: Icons.more_time_outlined,
-            selectedIcon: Icons.more_time_rounded,
-            label: 'Overtime',
-            selected: currentIndex == 1,
-            color: selectedColor,
-            onTap: () => onDestinationSelected(1),
+      border: Border(top: BorderSide(color: AppColors.border)),
+    ),
+    child: NavigationBarTheme(
+      data: NavigationBarThemeData(
+        height: 72,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.accentLight,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 23,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.accent
+                : AppColors.muted,
           ),
-          _Destination(
-            icon: Icons.event_outlined,
-            selectedIcon: Icons.event_rounded,
-            label: 'Leave',
-            selected: currentIndex == 2,
-            color: selectedColor,
-            onTap: () => onDestinationSelected(2),
-          ),
-          const SizedBox(width: 64),
-          _Destination(
-            icon: Icons.report_problem_outlined,
-            selectedIcon: Icons.report_problem_rounded,
-            label: 'Missing',
-            selected: currentIndex == 3,
-            color: selectedColor,
-            onTap: () => onDestinationSelected(3),
-          ),
-          _Destination(
-            icon: Icons.person_outline_rounded,
-            selectedIcon: Icons.person_rounded,
-            label: 'Profile',
-            selected: currentIndex == 4,
-            color: selectedColor,
-            onTap: () => onDestinationSelected(4),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Destination extends StatelessWidget {
-  const _Destination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-  final bool selected;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final itemColor = selected ? color : const Color(0xFF98A2B3);
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(selected ? selectedIcon : icon, color: itemColor, size: 22),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  color: itemColor,
-                  fontSize: 10,
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                ),
-              ),
-            ],
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w400,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.accent
+                : AppColors.muted,
           ),
         ),
       ),
-    );
-  }
+      child: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: onDestinationSelected,
+        elevation: 0,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.schedule_outlined),
+            selectedIcon: Icon(Icons.schedule),
+            label: 'Overtime',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.date_range_outlined),
+            selectedIcon: Icon(Icons.date_range),
+            label: 'Leave',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: 'Missing',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_circle_outlined),
+            selectedIcon: Icon(Icons.account_circle),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    ),
+  );
 }

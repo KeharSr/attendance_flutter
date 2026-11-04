@@ -1,11 +1,13 @@
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
-import 'package:attendance_flutter/features/auth/presentation/view/auth_components.dart';
-import 'package:attendance_flutter/features/auth/presentation/view/register_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+const _teal = Color(0xFF006B7A);
+const _ink = Color(0xFF182230);
+const _muted = Color(0xFF667085);
 
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
@@ -15,6 +17,7 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
+  final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -22,14 +25,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
   Widget build(BuildContext context) {
     ref.listen(authViewModelProvider, (previous, next) {
       if (!mounted) return;
-
       if (next.successMessage != null &&
           next.successMessage != previous?.successMessage) {
-        final message = next.successMessage!;
-
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(
-            builder: (_) => DashboardView(message: message),
+            builder: (_) => DashboardView(message: next.successMessage!),
           ),
         );
       } else if (next.errorMessage != null &&
@@ -37,229 +37,329 @@ class _LoginViewState extends ConsumerState<LoginView> {
         AppSnackBar.error(context, next.errorMessage!);
       }
     });
-
-    final loginState = ref.watch(authViewModelProvider);
-    final isPasswordVisible = loginState.willPasswordShow;
+    final state = ref.watch(authViewModelProvider);
     return Scaffold(
-      backgroundColor: authBackground,
+      backgroundColor: const Color(0xFFF5F6F8),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AttendanceBrandHeader(
-                    eyebrow: 'Your workday, organized',
-                    title: 'Good to see you.',
-                    subtitle: 'Sign in to clock in, view your hours, and stay connected with your team.',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 400;
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 16 : 24,
+                vertical: 22,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 44).clamp(
+                    0.0,
+                    double.infinity,
                   ),
-                  const SizedBox(height: 18),
-                  _AttendanceTip(
-                    icon: Icons.schedule_rounded,
-                    title: 'Ready for today?',
-                    subtitle: 'Keep your attendance up to date in one place.',
-                  ),
-                  const SizedBox(height: 18),
-                  _AuthCard(
-                    title: 'Sign in to your account',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const AuthFieldLabel(label: 'Phone number'),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(
-                            hintText: 'e.g. 98XXXXXXXX',
-                            prefixIcon: Icon(Icons.phone_outlined),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const AuthFieldLabel(label: 'Password'),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: !isPasswordVisible,
-                          textInputAction: TextInputAction.done,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            suffixIcon: IconButton(
-                              tooltip: isPasswordVisible
-                                  ? 'Show password'
-                                  : 'Hide password',
-                              onPressed: () {
-                                ref
-                                    .read(authViewModelProvider.notifier)
-                                    .togglePasswordVisibility();
-                              },
-                              icon: Icon(
-                                isPasswordVisible
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+                ),
+                child: Center(
+                  child: Container(
+                    width: 485,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: compact ? 24 : 42,
+                      vertical: 42,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE4E7EC)),
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: AutofillGroup(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _BrandHeader(),
+                            const SizedBox(height: 32),
+                            const Center(
+                              child: Text(
+                                'Sign in',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _ink,
+                                  fontSize: 28,
+                                  height: 1.25,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -1,
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            const Center(
+                              child: Text(
+                                'Access your GBN Store employee account.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _muted,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 36),
+                            const _FieldLabel('Phone number'),
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: _phoneController,
+                              style: const TextStyle(fontSize: 14, color: _ink),
+                              validator: (value) =>
+                                  value == null || value.trim().isEmpty
+                                  ? 'Enter your phone number'
+                                  : null,
+                              keyboardType: TextInputType.phone,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [
+                                AutofillHints.telephoneNumber,
+                              ],
+                              decoration: _fieldDecoration(
+                                'Enter your phone number',
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            const _FieldLabel('Password'),
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: _passwordController,
+                              style: const TextStyle(fontSize: 14, color: _ink),
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                  ? 'Enter your password'
+                                  : null,
+                              obscureText: !state.willPasswordShow,
+                              enableSuggestions: false,
+                              autocorrect: false,
+                              autofillHints: const [AutofillHints.password],
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) {
+                                if (!state.isLoading) _signIn();
+                              },
+                              decoration:
+                                  _fieldDecoration(
+                                    'Enter your password',
+                                  ).copyWith(
+                                    suffixIcon: TextButton(
+                                      onPressed: () => ref
+                                          .read(authViewModelProvider.notifier)
+                                          .togglePasswordVisibility(),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xFF467D91,
+                                        ),
+                                        minimumSize: const Size(64, 50),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        textStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge
+                                            ?.copyWith(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                      child: Text(
+                                        state.willPasswordShow
+                                            ? 'Hide'
+                                            : 'Show',
+                                      ),
+                                    ),
+                                  ),
+                            ),
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: FilledButton(
+                                onPressed: state.isLoading ? null : _signIn,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _teal,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shadowColor: const Color(0x33008399),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge
+                                      ?.copyWith(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                child: state.isLoading
+                                    ? const AppLoadingIndicator(
+                                        size: 20,
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                        label: 'Signing in',
+                                      )
+                                    : const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Sign in'),
+                                          SizedBox(width: 10),
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            size: 16,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            const Divider(height: 1, color: Color(0xFFE5EEF2)),
+                            const SizedBox(height: 27),
+                            const Center(
+                              child: Text(
+                                'Need access? Contact your workspace administrator.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: _muted,
+                                  fontSize: 12,
+                                  height: 1.6,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {},
-                            child: const Text('Forgot password?'),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: FilledButton.icon(
-                            onPressed: () {
-                              ref
-                                  .read(authViewModelProvider.notifier)
-                                  .loginUser(
-                                    phone: _phoneController.text,
-                                    password: _passwordController.text,
-                                  );
-                            },
-                            icon: loginState.isLoading
-                                ? AppLoadingIndicator()
-                                : const Icon(Icons.login_rounded, size: 20),
-                            label: const Text('Sign in'),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const RegisterView(),
-                          ),
-                        );
-                      },
-                      child: const Text('New to Workforce? Create an account'),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const _SupportText(),
-                ],
+                ),
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _signIn() {
+    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    ref
+        .read(authViewModelProvider.notifier)
+        .loginUser(
+          phone: _phoneController.text.trim(),
+          password: _passwordController.text,
+        );
+  }
+
+  InputDecoration _fieldDecoration(String hint) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+    );
+    return InputDecoration(
+      hintText: hint,
+      errorMaxLines: 2,
+      filled: true,
+      fillColor: Colors.white,
+      hintStyle: const TextStyle(color: _muted, fontSize: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 17),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: _teal, width: 1.5),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(
+      color: _ink,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+  );
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(13),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: OverflowBox(
+            maxWidth: 77,
+            maxHeight: 77,
+            child: Image.asset(
+              'assets/images/gadgetbyte_logo.jpg',
+              width: 77,
+              height: 77,
+              semanticLabel: 'Gadgetbyte logo',
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _AuthCard extends StatelessWidget {
-  const _AuthCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08102A43),
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(color: authNavy, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 22),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _AttendanceTip extends StatelessWidget {
-  const _AttendanceTip({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          height: 42,
-          width: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE3F2EA),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: const Icon(
-            Icons.check_circle_outline_rounded,
-            color: Color(0xFF218653),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(color: authNavy, fontWeight: FontWeight.w800),
+      const SizedBox(width: 12),
+      const Flexible(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'GBN Store',
+              style: TextStyle(
+                color: _ink,
+                fontSize: 23,
+                height: 1.25,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -.8,
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: const Color(0xFF718096)),
-              ),
-            ],
-          ),
+            ),
+            SizedBox(height: 3),
+            Wrap(
+              spacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'HRMS',
+                  style: TextStyle(
+                    color: _teal,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                Text(
+                  'Employee portal',
+                  style: TextStyle(color: _muted, fontSize: 9),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
-    );
-  }
-}
-
-class _SupportText extends StatelessWidget {
-  const _SupportText();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Need help? Contact your administrator',
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: const Color(0xFF8290A3)),
       ),
-    );
-  }
+    ],
+  );
 }

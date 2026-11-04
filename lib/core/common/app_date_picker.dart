@@ -22,10 +22,10 @@ Future<DateTime?> showAppDatePicker(
     builder: (context, child) => Theme(
       data: Theme.of(context).copyWith(
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFF1769E0),
+          primary: Color(0xFF006B7A),
           onPrimary: Colors.white,
           surface: Colors.white,
-          onSurface: Color(0xFF102A43),
+          onSurface: Color(0xFF182230),
         ),
         datePickerTheme: DatePickerThemeData(
           backgroundColor: Colors.white,
@@ -33,11 +33,11 @@ Future<DateTime?> showAppDatePicker(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          headerBackgroundColor: const Color(0xFF1769E0),
+          headerBackgroundColor: const Color(0xFF006B7A),
           headerForegroundColor: Colors.white,
-          todayBackgroundColor: const WidgetStatePropertyAll(Color(0x141769E0)),
-          todayForegroundColor: const WidgetStatePropertyAll(Color(0xFF1769E0)),
-          dayOverlayColor: const WidgetStatePropertyAll(Color(0x141769E0)),
+          todayBackgroundColor: const WidgetStatePropertyAll(Color(0x14006B7A)),
+          todayForegroundColor: const WidgetStatePropertyAll(Color(0xFF006B7A)),
+          dayOverlayColor: const WidgetStatePropertyAll(Color(0x14006B7A)),
         ),
       ),
       child: child!,

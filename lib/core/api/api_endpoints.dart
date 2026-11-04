@@ -15,4 +15,8 @@ class ApiEndpoints {
       "$baseUrl/missing-attendance/request";
   static const String fetchMissingAttendance =
       "$baseUrl/missing-attendance/get-all-request";
+  static String editOvertime(String requestId) =>
+      "$baseUrl/overtime/request/$requestId";
+  static String deleteOvertime(String requestId) =>
+      "$baseUrl/overtime/request/$requestId";
 }

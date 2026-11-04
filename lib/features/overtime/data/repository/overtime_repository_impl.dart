@@ -37,4 +37,36 @@ class OvertimeRepositoryImpl implements IOvertimeRepository {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, OvertimeEntity>> editOvertime({
+    required String overtimeId,
+    required String workDate,
+    required double overtimeHours,
+    required String reason,
+  }) async {
+    try {
+      final result = await _overtimeDataSource.editOvertime(
+        overtimeId: overtimeId,
+        workDate: workDate,
+        overtimeHours: overtimeHours,
+        reason: reason,
+      );
+      return Right(result.toEntity());
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteOvertime({
+    required String overtimeId,
+  }) async {
+    try {
+      await _overtimeDataSource.deleteOvertimeRequest(overtimeId: overtimeId);
+      return Right(true);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
+import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/app_date_field.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LeaveView extends ConsumerStatefulWidget {
   const LeaveView({super.key});
-
   @override
   ConsumerState<LeaveView> createState() => _LeaveViewState();
 }
@@ -17,7 +16,6 @@ class LeaveView extends ConsumerStatefulWidget {
 class _LeaveViewState extends ConsumerState<LeaveView> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
-
   @override
   void dispose() {
     _reasonController.dispose();
@@ -26,7 +24,7 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
 
   @override
   Widget build(BuildContext context) {
-    final leaveState = ref.watch(leaveViewModelProvider);
+    final state = ref.watch(leaveViewModelProvider);
     ref.listen(leaveViewModelProvider, (previous, next) {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
@@ -40,179 +38,113 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
         AppSnackBar.error(context, next.errorMessage!);
       }
     });
-
-    return DefaultTabController(
-      length: 2,
-      child: Column(
+    return RequestTabs(
+      onHistory: () {
+        if (!state.isLoading) {
+          ref.read(leaveViewModelProvider.notifier).getAllLeaves();
+        }
+      },
+      history: LeaveHistoryView(
+        requests: state.requests,
+        isLoading: state.isLoading,
+        errorMessage: state.errorMessage,
+        onRefresh: () =>
+            ref.read(leaveViewModelProvider.notifier).getAllLeaves(),
+      ),
+      request: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7EEF9),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: TabBar(
-              onTap: _handleTabChanged,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorPadding: EdgeInsets.all(4),
-              dividerColor: Colors.transparent,
-              indicator: BoxDecoration(
-                color: Color(0xFF1769E0),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Color(0xFF344054),
-              labelStyle: TextStyle(fontWeight: FontWeight.w700),
-              tabs: [
-                Tab(text: 'Apply leave'),
-                Tab(text: 'Leave history'),
-              ],
-            ),
+          const RequestIntro(
+            'Request leave',
+            'Choose your dates and provide a reason for your time off.',
           ),
-          Expanded(
-            child: TabBarView(
+          RequestFormCard(
+            formKey: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                  children: [
-                    const Text(
-                      'Apply leave',
-                      style: TextStyle(
-                        color: Color(0xFF102A43),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Choose your dates and tell us why you need time off.',
-                      style: TextStyle(color: Color(0xFF667085), fontSize: 13),
-                    ),
-                    const SizedBox(height: 22),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppDateField(
-                            label: 'Start date',
-                            date: leaveState.startDate,
-                            onTap: () async {
-                              final date = await showAppDatePicker(
-                                context,
-                                selectedDate: leaveState.startDate,
-                                helpText: 'Select start date',
-                              );
-                              if (date != null && mounted) {
-                                ref
-                                    .read(leaveViewModelProvider.notifier)
-                                    .setStartDate(date);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                          AppDateField(
-                            label: 'End date',
-                            date: leaveState.endDate,
-                            onTap: () async {
-                              final date = await showAppDatePicker(
-                                context,
-                                selectedDate:
-                                    leaveState.endDate ?? leaveState.startDate,
-                                firstDate: leaveState.startDate,
-                                helpText: 'Select end date',
-                              );
-                              if (date != null && mounted) {
-                                ref
-                                    .read(leaveViewModelProvider.notifier)
-                                    .setEndDate(date);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                          Text(
-                            'Reason',
-                            style: const TextStyle(
-                              color: Color(0xFF344054),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _reasonController,
-                            minLines: 5,
-                            maxLines: 6,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: const InputDecoration(
-                              hintText: 'Write here',
-                              alignLabelWithHint: true,
-                              contentPadding: EdgeInsets.fromLTRB(
-                                14,
-                                15,
-                                14,
-                                15,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please add a reason.';
-                              }
-                              if (value.trim().length < 5) {
-                                return 'Please provide a little more detail.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 26),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: FilledButton(
-                              onPressed: leaveState.isLoading
-                                  ? null
-                                  : () {
-                                      if (!(_formKey.currentState?.validate() ??
-                                          false)) {
-                                        return;
-                                      }
-                                      if (leaveState.startDate == null ||
-                                          leaveState.endDate == null) {
-                                        AppSnackBar.error(
-                                          context,
-                                          'Select a start date and end date.',
-                                        );
-                                        return;
-                                      }
-                                      ref
-                                          .read(leaveViewModelProvider.notifier)
-                                          .submitLeave(
-                                            startDate: leaveState.startDate!,
-                                            endDate: leaveState.endDate!,
-                                            reason: _reasonController.text
-                                                .trim(),
-                                          );
-                                    },
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1769E0),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              child: leaveState.isLoading
-                                  ? AppLoadingIndicator()
-                                  : const Text('Apply for leave'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                AppDateField(
+                  label: 'Start date',
+                  date: state.startDate,
+                  onTap: () async {
+                    if (state.isLoading) return;
+                    final date = await showAppDatePicker(
+                      context,
+                      selectedDate: state.startDate,
+                      helpText: 'Select start date',
+                    );
+                    if (date != null && mounted) {
+                      ref
+                          .read(leaveViewModelProvider.notifier)
+                          .setStartDate(date);
+                    }
+                  },
                 ),
-                LeaveHistoryView(
-                  requests: leaveState.requests,
-                  isLoading: leaveState.isLoading,
+                const SizedBox(height: 20),
+                AppDateField(
+                  label: 'End date',
+                  date: state.endDate,
+                  onTap: () async {
+                    if (state.isLoading) return;
+                    final date = await showAppDatePicker(
+                      context,
+                      selectedDate: state.endDate ?? state.startDate,
+                      firstDate: state.startDate,
+                      helpText: 'Select end date',
+                    );
+                    if (date != null && mounted) {
+                      ref
+                          .read(leaveViewModelProvider.notifier)
+                          .setEndDate(date);
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                const RequestLabel('Reason'),
+                TextFormField(
+                  controller: _reasonController,
+                  enabled: !state.isLoading,
+                  minLines: 3,
+                  maxLines: 6,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(
+                    color: requestInk,
+                    fontSize: 14,
+                    height: 1.6,
+                  ),
+                  decoration: requestInput('Briefly explain your request'),
+                  validator: (value) => (value?.trim().length ?? 0) < 5
+                      ? 'Please provide a little more detail.'
+                      : null,
+                ),
+                const SizedBox(height: 26),
+                RequestSubmitButton(
+                  loading: state.isLoading,
+                  onPressed: () {
+                    if (!(_formKey.currentState?.validate() ?? false)) return;
+                    if (state.startDate == null || state.endDate == null) {
+                      AppSnackBar.error(
+                        context,
+                        'Select a start date and end date.',
+                      );
+                      return;
+                    }
+                    if (state.endDate!.isBefore(state.startDate!)) {
+                      AppSnackBar.error(
+                        context,
+                        'End date must be on or after start date.',
+                      );
+                      return;
+                    }
+                    ref
+                        .read(leaveViewModelProvider.notifier)
+                        .submitLeave(
+                          startDate: state.startDate!,
+                          endDate: state.endDate!,
+                          reason: _reasonController.text.trim(),
+                        );
+                  },
                 ),
               ],
             ),
@@ -220,11 +152,5 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
         ],
       ),
     );
-  }
-
-  void _handleTabChanged(int index) {
-    if (index == 1) {
-      ref.read(leaveViewModelProvider.notifier).getAllLeaves();
-    }
   }
 }

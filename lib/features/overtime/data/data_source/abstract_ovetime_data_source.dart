@@ -6,5 +6,14 @@ abstract interface class IAbstractOvertimeDataSource {
     required double overtimeHours,
     required String reason,
   });
+
   Future<List<OvertimeApiModel>> getAllOvertime();
+
+  Future<OvertimeApiModel> editOvertime({
+    required String overtimeId,
+    required String workDate,
+    required double overtimeHours,
+    required String reason,
+  });
+  Future<void> deleteOvertimeRequest({required String overtimeId});
 }

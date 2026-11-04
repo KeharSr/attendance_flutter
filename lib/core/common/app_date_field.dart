@@ -1,4 +1,5 @@
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
+import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:flutter/material.dart';
 
 class AppDateField extends StatelessWidget {
@@ -8,35 +9,32 @@ class AppDateField extends StatelessWidget {
     required this.date,
     required this.onTap,
   });
-
   final String label;
   final DateTime? date;
   final VoidCallback onTap;
-
   @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      key: ValueKey('$label-${date?.toIso8601String()}'),
-      readOnly: true,
-      onTap: onTap,
-      initialValue: date == null ? null : DateTimeUtils.formatDate(date!),
-      style: const TextStyle(
-        color: Color(0xFF102A43),
-        fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      RequestLabel(label),
+      TextFormField(
+        key: ValueKey('$label-${date?.toIso8601String()}'),
+        readOnly: true,
+        onTap: onTap,
+        initialValue: date == null ? null : DateTimeUtils.formatDate(date!),
+        style: const TextStyle(color: requestInk, fontSize: 14),
+        decoration:
+            requestInput(
+              'Select date',
+              icon: Icons.calendar_today_outlined,
+            ).copyWith(
+              suffixIcon: const Icon(
+                Icons.expand_more_rounded,
+                color: requestMuted,
+                size: 20,
+              ),
+            ),
       ),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: 'Select $label',
-        prefixIcon: const Icon(
-          Icons.calendar_today_rounded,
-          color: Color(0xFF1769E0),
-          size: 19,
-        ),
-        suffixIcon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: Color(0xFF667085),
-        ),
-      ),
-    );
-  }
+    ],
+  );
 }

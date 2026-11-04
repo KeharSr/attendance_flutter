@@ -5,7 +5,7 @@ import 'api_endpoints.dart';
 import 'api_exception.dart';
 
 class ApiClient {
-  ApiClient({Dio? dio, Future<void> Function()? onUnauthorized})
+  ApiClient({Dio? dio})
     : _dio =
           dio ??
           Dio(
@@ -28,15 +28,9 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
           handler.next(options);
         },
         onError: (exception, handler) async {
-          if (exception.response?.statusCode == 401) {
-            await onUnauthorized?.call();
-          }
           handler.next(exception);
         },
       ),

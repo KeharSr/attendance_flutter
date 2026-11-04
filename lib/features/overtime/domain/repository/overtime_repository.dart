@@ -8,5 +8,15 @@ abstract interface class IOvertimeRepository {
     required double overtimeHours,
     required String reason,
   });
+
   Future<Either<Failure, List<OvertimeEntity>>> getAllOvertime();
+
+  Future<Either<Failure, OvertimeEntity>> editOvertime({
+    required String overtimeId,
+    required String workDate,
+    required double overtimeHours,
+    required String reason,
+  });
+
+  Future<Either<Failure, bool>> deleteOvertime({required String overtimeId});
 }

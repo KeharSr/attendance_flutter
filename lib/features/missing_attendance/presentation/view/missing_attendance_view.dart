@@ -1,6 +1,6 @@
+import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_date_field.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
-import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
@@ -51,70 +51,39 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
       }
     });
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7EEF9),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: TabBar(
-              onTap: (index) {
-                if (index == 1) {
-                  ref
-                      .read(missingAttendanceViewModelProvider.notifier)
-                      .fetchMissingAttendance();
-                }
-              },
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorPadding: const EdgeInsets.all(4),
-              dividerColor: Colors.transparent,
-              indicator: const BoxDecoration(
-                color: Color(0xFF1769E0),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Color(0xFF344054),
-              labelStyle: TextStyle(fontWeight: FontWeight.w700),
-              tabs: const [
-                Tab(text: 'Report missing'),
-                Tab(text: 'Report history'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _ReportForm(
-                  state: state,
-                  formKey: _formKey,
-                  reasonController: _reasonController,
-                  missingDate: _missingDate,
-                  checkIn: _checkIn,
-                  checkOut: _checkOut,
-                  onDateSelected: (date) => setState(() => _missingDate = date),
-                  onCheckInSelected: (time) => setState(() => _checkIn = time),
-                  onCheckOutSelected: (time) =>
-                      setState(() => _checkOut = time),
-                  onSubmit: _submit,
-                ),
-                MissingAttendanceHistoryView(
-                  requests: state.missingAttendance,
-                  isLoading: state.isLoading,
-                  errorMessage: state.failureMessage,
-                ),
-              ],
-            ),
-          ),
-        ],
+    return RequestTabs(
+      onHistory: () {
+        if (!state.isLoading) {
+          ref
+              .read(missingAttendanceViewModelProvider.notifier)
+              .fetchMissingAttendance();
+        }
+      },
+      request: _ReportForm(
+        state: state,
+        formKey: _formKey,
+        reasonController: _reasonController,
+        missingDate: _missingDate,
+        checkIn: _checkIn,
+        checkOut: _checkOut,
+        onDateSelected: (date) => setState(() => _missingDate = date),
+        onCheckInSelected: (time) => setState(() => _checkIn = time),
+        onCheckOutSelected: (time) => setState(() => _checkOut = time),
+        onSubmit: _submit,
+      ),
+      history: MissingAttendanceHistoryView(
+        requests: state.missingAttendance,
+        isLoading: state.isLoading,
+        errorMessage: state.failureMessage,
+        onRefresh: () => ref
+            .read(missingAttendanceViewModelProvider.notifier)
+            .fetchMissingAttendance(),
       ),
     );
   }
 
   void _submit() {
+    if (ref.read(missingAttendanceViewModelProvider).isLoading) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_missingDate == null || _checkIn == null || _checkOut == null) {
       AppSnackBar.error(context, 'Select the date, check-in, and check-out.');
@@ -171,22 +140,12 @@ class _ReportForm extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       children: [
-        const Text(
+        const RequestIntro(
           'Report missing attendance',
-          style: TextStyle(
-            color: Color(0xFF102A43),
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-          ),
+          'Submit a correction for an unrecorded attendance entry.',
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Tell us when you worked so your attendance can be corrected.',
-          style: TextStyle(color: Color(0xFF667085), fontSize: 13),
-        ),
-        const SizedBox(height: 22),
-        Form(
-          key: formKey,
+        RequestFormCard(
+          formKey: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -228,15 +187,18 @@ class _ReportForm extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 18),
+              const RequestLabel('Reason'),
               TextFormField(
+                enabled: !state.isLoading,
                 controller: reasonController,
-                minLines: 5,
+                minLines: 3,
                 maxLines: 6,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'Reason',
-                  hintText: 'Write here',
-                  alignLabelWithHint: true,
+                decoration: requestInput('Briefly explain the missing entry'),
+                style: const TextStyle(
+                  color: requestInk,
+                  fontSize: 14,
+                  height: 1.6,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -249,15 +211,9 @@ class _ReportForm extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 26),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: state.isLoading ? null : onSubmit,
-                  child: state.isLoading
-                      ? const AppLoadingIndicator(color: Colors.white)
-                      : const Text('Submit missing attendance'),
-                ),
+              RequestSubmitButton(
+                loading: state.isLoading,
+                onPressed: onSubmit,
               ),
             ],
           ),
@@ -280,24 +236,25 @@ class _TimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      key: ValueKey('$label-${value?.hour}:${value?.minute}'),
-      readOnly: true,
-      onTap: onTap,
-      initialValue: value?.format(context),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: 'Select $label',
-        prefixIcon: const Icon(
-          Icons.schedule_rounded,
-          color: Color(0xFF1769E0),
-          size: 19,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RequestLabel(label),
+        TextFormField(
+          key: ValueKey('$label-${value?.hour}:${value?.minute}'),
+          readOnly: true,
+          onTap: onTap,
+          initialValue: value?.format(context),
+          style: const TextStyle(color: requestInk, fontSize: 14),
+          decoration: requestInput('Select time', icon: Icons.schedule_rounded)
+              .copyWith(
+                suffixIcon: const Icon(
+                  Icons.expand_more_rounded,
+                  color: requestMuted,
+                ),
+              ),
         ),
-        suffixIcon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: Color(0xFF667085),
-        ),
-      ),
+      ],
     );
   }
 }

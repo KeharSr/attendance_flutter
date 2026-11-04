@@ -39,4 +39,29 @@ class OvertimeDataSource implements IAbstractOvertimeDataSource {
 
     return result;
   }
+
+  @override
+  Future<OvertimeApiModel> editOvertime({
+    required String overtimeId,
+    required String workDate,
+    required double overtimeHours,
+    required String reason,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiEndpoints.editOvertime(overtimeId),
+      data: {
+        'workDate': workDate,
+        'overtimeHours': overtimeHours,
+        'reason': reason,
+      },
+    );
+    final json = response.data['data'] as Map<String, dynamic>;
+    final convertedJson = OvertimeApiModel.fromJson(json);
+    return convertedJson;
+  }
+
+  @override
+  Future<void> deleteOvertimeRequest({required String overtimeId}) async {
+    await _apiClient.delete(ApiEndpoints.deleteOvertime(overtimeId));
+  }
 }

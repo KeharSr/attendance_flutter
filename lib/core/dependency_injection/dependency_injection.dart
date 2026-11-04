@@ -26,6 +26,8 @@ import 'package:attendance_flutter/features/missing_attendance/presentation/view
 import 'package:attendance_flutter/features/missing_attendance/presentation/view_model/view_model/missing_attendance_view_model.dart';
 import 'package:attendance_flutter/features/overtime/data/data_source/overtime_data_source.dart';
 import 'package:attendance_flutter/features/overtime/data/repository/overtime_repository_impl.dart';
+import 'package:attendance_flutter/features/overtime/domain/usecase/delete_overtime_usecase.dart';
+import 'package:attendance_flutter/features/overtime/domain/usecase/edit_overtime_usecase.dart';
 import 'package:attendance_flutter/features/overtime/domain/usecase/get_all_overtime_request_usecase.dart';
 import 'package:attendance_flutter/features/overtime/domain/usecase/overtime_request_usecase.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/state/overtime_state.dart';
@@ -64,14 +66,7 @@ final authSessionProvider = NotifierProvider<AuthSessionNotifier, bool>(
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   late final ApiClient apiClient;
-  apiClient = ApiClient(
-    dio: ref.read(dioProvider),
-    onUnauthorized: () async {
-      await ref.read(appSharedPrefsProvider).removeSession();
-      apiClient.clearAuthToken();
-      ref.read(authSessionProvider.notifier).markLoggedOut();
-    },
-  );
+  apiClient = ApiClient(dio: ref.read(dioProvider));
   final token = ref.read(appSharedPrefsProvider).getAuthToken();
   if (token != null && token.isNotEmpty) {
     apiClient.setAuthToken(token);
@@ -178,6 +173,18 @@ final overtimeRepositoryProvider = Provider<OvertimeRepositoryImpl>((ref) {
 
 final overtimeRequestUseCaseProvider = Provider<OvertimeRequestUsecase>((ref) {
   return OvertimeRequestUsecase(
+    iOvertimeRepository: ref.read(overtimeRepositoryProvider),
+  );
+});
+
+final editOvertimeUseCaseProvider = Provider<EditOvertimeUsecase>((ref) {
+  return EditOvertimeUsecase(
+    iOvertimeRepository: ref.read(overtimeRepositoryProvider),
+  );
+});
+
+final deleteOvertimeUseCaseProvider = Provider<DeleteOvertimeUsecase>((ref) {
+  return DeleteOvertimeUsecase(
     iOvertimeRepository: ref.read(overtimeRepositoryProvider),
   );
 });

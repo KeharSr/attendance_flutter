@@ -1,163 +1,163 @@
+import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      children: [
-        const _ProfileHeader(),
-        const SizedBox(height: 28),
-        const _ProfileSectionLabel('Personal information'),
-        const SizedBox(height: 10),
-        const _ProfileCard(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prefs = ref.watch(appSharedPrefsProvider);
+    final savedName = prefs.getUserName()?.trim() ?? '';
+    final name = savedName.isEmpty ? 'Employee' : savedName;
+    final phone = prefs.getUserPhone()?.trim();
+    final id = prefs.getUserId()?.trim();
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           children: [
-            _ProfileDetail(
-              icon: Icons.phone_outlined,
-              label: 'Phone number',
-              value: '9860125332',
-            ),
-            Divider(height: 1, indent: 56),
-            _ProfileDetail(
-              icon: Icons.badge_outlined,
-              label: 'Role',
-              value: 'Employee',
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        const _ProfileSectionLabel('Account'),
-        const SizedBox(height: 10),
-        _ProfileCard(
-          children: [
-            _ProfileAction(
-              icon: Icons.lock_outline_rounded,
-              title: 'Change password',
-              subtitle: 'Keep your account secure',
-              onTap: () {},
-            ),
-            const Divider(height: 1, indent: 56),
-            _ProfileAction(
-              icon: Icons.notifications_none_rounded,
-              title: 'Notifications',
-              subtitle: 'Manage your reminders',
-              onTap: () {},
-            ),
-            const Divider(height: 1, indent: 56),
-            Consumer(
-              builder: (context, ref, child) {
-                return _ProfileAction(
-                  icon: Icons.logout_rounded,
-                  title: 'Sign out',
-                  subtitle: 'End your current session',
-                  color: const Color(0xFFB42318),
-                  onTap: () {
-                    ref.read(apiClientProvider).clearAuthToken();
-                    ref.read(appSharedPrefsProvider).removeSession();
-                    ref.read(authSessionProvider.notifier).markLoggedOut();
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-      decoration: BoxDecoration(
-        color: const Color(0xFF102A43),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: const Row(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: Color(0xFFE8F1FF),
-            child: Text(
-              'K',
-              style: TextStyle(
-                color: Color(0xFF1769E0),
-                fontSize: 25,
-                fontWeight: FontWeight.w800,
+            _ProfileCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: AppColors.accentLight,
+                        child: Text(
+                          name.characters.first.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppColors.accent,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'GBN Store',
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(height: 1),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Personal information',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 20),
+                  _ProfileDetail(
+                    icon: Icons.person_outline,
+                    label: 'Full name',
+                    value: name,
+                  ),
+                  const SizedBox(height: 22),
+                  _ProfileDetail(
+                    icon: Icons.phone_outlined,
+                    label: 'Phone number',
+                    value: phone == null || phone.isEmpty
+                        ? 'Not provided'
+                        : phone,
+                  ),
+                  const SizedBox(height: 22),
+                  _ProfileDetail(
+                    icon: Icons.badge_outlined,
+                    label: 'Employee ID',
+                    value: id == null || id.isEmpty ? 'Not provided' : id,
+                  ),
+                ],
               ),
             ),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Kehar Ojha',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+            const SizedBox(height: 24),
+            _ProfileCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Account',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Employee · keharojha',
-                  style: TextStyle(color: Color(0xB8FFFFFF)),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    'To update your details or account access, contact your HR administrator.',
+                    style: TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                      ),
+                      icon: const Icon(Icons.logout, size: 20),
+                      label: const Text('Sign out'),
+                      onPressed: () async {
+                        ref.read(apiClientProvider).clearAuthToken();
+                        await ref.read(appSharedPrefsProvider).removeSession();
+                        if (!context.mounted) return;
+                        ref.read(authSessionProvider.notifier).markLoggedOut();
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.verified_rounded, color: Color(0xFF8FC2FF), size: 22),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileSectionLabel extends StatelessWidget {
-  const _ProfileSectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: const TextStyle(
-        color: Color(0xFF667085),
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1,
+            const SizedBox(height: 24),
+            const Text(
+              'GBN Store HRMS',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.children});
-
-  final List<Widget> children;
-
+  const _ProfileCard({required this.child});
+  final Widget child;
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6EBF2)),
-      ),
-      child: Column(children: children),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: child,
+  );
 }
 
 class _ProfileDetail extends StatelessWidget {
@@ -166,121 +166,35 @@ class _ProfileDetail extends StatelessWidget {
     required this.label,
     required this.value,
   });
-
   final IconData icon;
   final String label;
   final String value;
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      child: Row(
-        children: [
-          _IconBox(icon: icon),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFF667085),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Color(0xFF102A43),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileAction extends StatelessWidget {
-  const _ProfileAction({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.color = const Color(0xFF1769E0),
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        child: Row(
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 21, color: AppColors.muted),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _IconBox(icon: icon, color: color),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: color == const Color(0xFFB42318)
-                          ? color
-                          : const Color(0xFF102A43),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF667085),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+            Text(
+              label,
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF98A2B3)),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _IconBox extends StatelessWidget {
-  const _IconBox({required this.icon, this.color = const Color(0xFF1769E0)});
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: .1),
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Icon(icon, color: color, size: 20),
-    );
-  }
+    ],
+  );
 }

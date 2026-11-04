@@ -1,22 +1,23 @@
+import 'package:attendance_flutter/features/dashboard/presentation/view_model/widgets/attendance_clock.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/state/attendance_state.dart';
 import 'package:flutter/material.dart';
+import 'package:attendance_flutter/features/dashboard/presentation/view_model/view_model/dashboard_navigation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DashboardHomeView extends ConsumerStatefulWidget {
+const _ink = Color(0xFF182230);
+const _muted = Color(0xFF667085);
+
+class DashboardHomeView extends ConsumerWidget {
   const DashboardHomeView({super.key});
 
   @override
-  ConsumerState<DashboardHomeView> createState() => _DashboardHomeViewState();
-}
-
-class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
-  @override
-  Widget build(BuildContext context) {
-    final attendanceState = ref.watch(attendanceViewModelProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attendance = ref.watch(attendanceViewModelProvider);
     final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
+    final name = ref.read(appSharedPrefsProvider).getUserName()?.trim();
     ref.listen<AttendanceState>(attendanceViewModelProvider, (previous, next) {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
@@ -27,437 +28,285 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
         AppSnackBar.error(context, next.errorMessage!);
       }
     });
-
-    final clockInAt = attendanceState.attendance == null
-        ? null
-        : DateTimeUtils.parseBackendDateTime(
-            attendanceState.attendance!.checkIn,
-          );
-    final clockOutAt = attendanceState.attendance == null
-        ? null
-        : DateTimeUtils.parseBackendDateTime(
-            attendanceState.attendance!.checkout,
-          );
-    final isClockedIn = clockInAt != null && clockOutAt == null;
-    final elapsed = clockInAt == null
+    final start = DateTimeUtils.parseBackendDateTime(
+      attendance.attendance?.checkIn,
+    );
+    final end = DateTimeUtils.parseBackendDateTime(
+      attendance.attendance?.checkout,
+    );
+    final working = start != null && end == null;
+    final duration = start == null
         ? Duration.zero
-        : (clockOutAt ?? now).difference(clockInAt);
+        : (end ?? now).difference(start);
+    final elapsed = duration.isNegative ? Duration.zero : duration;
+    final greeting = now.hour < 12
+        ? 'Good morning'
+        : now.hour < 17
+        ? 'Good afternoon'
+        : 'Good evening';
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      children: [
-        _PageIntro(date: now),
-        const SizedBox(height: 22),
-        _AttendanceCard(
-          isClockedIn: isClockedIn,
-          isLoading: attendanceState.isLoading,
-          clockInAt: clockInAt,
-          elapsed: elapsed,
-          onToggle: () {
-            final attendanceViewModel = ref.read(
-              attendanceViewModelProvider.notifier,
-            );
-            if (isClockedIn) {
-              attendanceViewModel.clockOutAttendance();
-            } else {
-              attendanceViewModel.clockInAttendance();
-            }
-          },
-        ),
-        const SizedBox(height: 24),
-        const _SectionHeader(title: 'Today'),
-        const SizedBox(height: 10),
-        const _TodayDetails(),
-        const SizedBox(height: 24),
-        const _SectionHeader(title: 'Overview'),
-        const SizedBox(height: 10),
-        const _OverviewGrid(),
-      ],
-    );
-  }
-}
-
-class _PageIntro extends StatelessWidget {
-  const _PageIntro({required this.date});
-
-  final DateTime date;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good afternoon, Kehar',
-                style: TextStyle(
-                  color: Color(0xFF102A43),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Manage your workday in one place.',
-                style: TextStyle(color: Color(0xFF667085), fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        Text(
-          DateTimeUtils.formatDate(date),
-          textAlign: TextAlign.right,
-          style: const TextStyle(
-            color: Color(0xFF667085),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({
-    required this.isClockedIn,
-    required this.isLoading,
-    required this.clockInAt,
-    required this.elapsed,
-    required this.onToggle,
-  });
-
-  final bool isClockedIn;
-  final bool isLoading;
-  final DateTime? clockInAt;
-  final Duration elapsed;
-  final VoidCallback onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = isClockedIn
-        ? const Color(0xFFB42318)
-        : const Color(0xFF1769E0);
-    final statusColor = isClockedIn
-        ? const Color(0xFF14804A)
-        : const Color(0xFF667085);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A102A43),
-            blurRadius: 18,
-            offset: Offset(0, 7),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Attendance',
-                  style: TextStyle(
-                    color: Color(0xFF102A43),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: .1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isClockedIn ? 'Working now' : 'Not clocked in',
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          GestureDetector(
-            onTap: isLoading ? null : onToggle,
-            child: Container(
-              width: 178,
-              height: 178,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: accent.withValues(alpha: .06),
-                border: Border.all(
-                  color: accent.withValues(alpha: .18),
-                  width: 10,
-                ),
-              ),
-              child: Container(
-                margin: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accent,
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: .25),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 34,
-                        height: 34,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      )
-                    else
-                      Icon(
-                        isClockedIn
-                            ? Icons.stop_circle_outlined
-                            : Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                    const SizedBox(height: 5),
-                    Text(
-                      isLoading
-                          ? 'Getting location...'
-                          : isClockedIn
-                          ? 'Clock out'
-                          : 'Clock in',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (isClockedIn) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        DateTimeUtils.formatDuration(elapsed),
-                        style: const TextStyle(
-                          color: Color(0xD9FFFFFF),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+          children: [
+            Text(
+              DateTimeUtils.formatDate(now),
+              style: const TextStyle(
+                color: _muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
               ),
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            isLoading
-                ? 'Please wait while we verify your location'
-                : isClockedIn
-                ? 'You started at ${DateTimeUtils.formatTime(clockInAt!)}'
-                : 'Tap the button when you start your workday',
-            style: const TextStyle(color: Color(0xFF667085), fontSize: 12),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(
+              name == null || name.isEmpty
+                  ? '$greeting.'
+                  : '$greeting, ${name.split(' ').first}.',
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 24,
+                height: 1.25,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -.9,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'View your attendance and manage requests.',
+              style: TextStyle(color: _muted, fontSize: 13),
+            ),
+            const SizedBox(height: 26),
+            AttendanceClock(
+              now: now,
+              working: working,
+              completed: end != null,
+              loading: attendance.isLoading,
+              elapsed: elapsed,
+              checkIn: start,
+              onToggle: () {
+                final notifier = ref.read(attendanceViewModelProvider.notifier);
+                if (working) {
+                  notifier.clockOutAttendance();
+                } else {
+                  notifier.clockInAttendance();
+                }
+              },
+            ),
+            const SizedBox(height: 24),
+            const _SectionTitle(
+              'Attendance summary',
+              subtitle: 'Your latest recorded session',
+            ),
+            const SizedBox(height: 12),
+            _Surface(
+              child: Column(
+                children: [
+                  _SessionRow(
+                    icon: Icons.login_rounded,
+                    label: 'Clock in',
+                    value: start == null
+                        ? 'Not recorded'
+                        : DateTimeUtils.formatTime(start),
+                    date: start,
+                  ),
+                  const Divider(height: 25, color: Color(0xFFF0F3F7)),
+                  _SessionRow(
+                    icon: Icons.logout_rounded,
+                    label: 'Clock out',
+                    value: end == null
+                        ? (working ? 'In progress' : 'Not recorded')
+                        : DateTimeUtils.formatTime(end),
+                    date: end,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+            const _SectionTitle(
+              'Requests',
+              subtitle: 'Manage your work records',
+            ),
+            const SizedBox(height: 12),
+            _Surface(
+              child: Column(
+                children: [
+                  _Shortcut(
+                    icon: Icons.date_range_outlined,
+                    title: 'Leave request',
+                    subtitle: 'Plan your time off',
+                    onTap: () => ref
+                        .read(dashboardNavigationProvider.notifier)
+                        .select(DashboardTab.leave),
+                  ),
+                  const Divider(height: 25),
+                  _Shortcut(
+                    icon: Icons.schedule_outlined,
+                    title: 'Overtime request',
+                    subtitle: 'Submit extra working hours',
+                    onTap: () => ref
+                        .read(dashboardNavigationProvider.notifier)
+                        .select(DashboardTab.overtime),
+                  ),
+                  const Divider(height: 25),
+                  _Shortcut(
+                    icon: Icons.assignment_outlined,
+                    title: 'Attendance correction',
+                    subtitle: 'Report a missing entry',
+                    onTap: () => ref
+                        .read(dashboardNavigationProvider.notifier)
+                        .select(DashboardTab.missing),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TodayDetails extends StatelessWidget {
-  const _TodayDetails();
-
+class _Surface extends StatelessWidget {
+  const _Surface({required this.child});
+  final Widget child;
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: const Column(
-        children: [
-          _DetailRow(
-            icon: Icons.login_rounded,
-            label: 'Scheduled shift',
-            value: '09:00 AM – 05:00 PM',
-          ),
-          Divider(height: 1, indent: 58),
-          _DetailRow(
-            icon: Icons.free_breakfast_outlined,
-            label: 'Break',
-            value: '1 hour',
-          ),
-          Divider(height: 1, indent: 58),
-          _DetailRow(
-            icon: Icons.schedule_rounded,
-            label: 'Expected hours',
-            value: '8 hours',
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0xFFE4E7EC)),
+    ),
+    child: child,
+  );
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {required this.subtitle});
   final String title;
-
+  final String subtitle;
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: Color(0xFF102A43),
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          color: _ink,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -.3,
+        ),
       ),
-    );
-  }
+      const SizedBox(height: 4),
+      Text(subtitle, style: const TextStyle(color: _muted, fontSize: 13)),
+    ],
+  );
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
+class _SessionRow extends StatelessWidget {
+  const _SessionRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.date,
   });
-
   final IconData icon;
   final String label;
   final String value;
-
+  final DateTime? date;
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF1769E0), size: 20),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(color: Color(0xFF667085), fontSize: 13),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF102A43),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F6F8),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: const Color(0xFF667085), size: 19),
       ),
-    );
-  }
+      const SizedBox(width: 12),
+      Expanded(
+        child: Text(label, style: const TextStyle(color: _muted, fontSize: 12)),
+      ),
+      const SizedBox(width: 8),
+      Flexible(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (date != null)
+              Text(
+                DateTimeUtils.formatDate(date!),
+                textAlign: TextAlign.right,
+                style: const TextStyle(color: _muted, fontSize: 12),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
-class _OverviewGrid extends StatelessWidget {
-  const _OverviewGrid();
+class _Shortcut extends StatelessWidget {
+  const _Shortcut({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    const items = [
-      (Icons.more_time_rounded, 'Overtime', '02h 30m', Color(0xFF7C3AED)),
-      (
-        Icons.event_available_rounded,
-        'Leave balance',
-        '12 days',
-        Color(0xFF14804A),
-      ),
-      (
-        Icons.report_problem_outlined,
-        'Missing attendance',
-        '1 pending',
-        Color(0xFFD97706),
-      ),
-      (
-        Icons.calendar_month_rounded,
-        'Present this month',
-        '18 days',
-        Color(0xFF1769E0),
-      ),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.65,
-      ),
-      itemBuilder: (_, index) {
-        final item = items[index];
-        return Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(17),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(item.$1, color: item.$4, size: 21),
-              const Spacer(),
-              Text(
-                item.$2,
-                style: const TextStyle(color: Color(0xFF667085), fontSize: 11),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.$3,
-                style: const TextStyle(
-                  color: Color(0xFF102A43),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(6),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 22, color: _muted),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: _muted, fontSize: 13),
+                ),
+              ],
+            ),
           ),
-        );
-      },
-    );
-  }
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right, color: _muted, size: 20),
+        ],
+      ),
+    ),
+  );
 }
