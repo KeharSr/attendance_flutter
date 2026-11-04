@@ -10,6 +10,7 @@ import 'package:attendance_flutter/features/dashboard/data/data_source/attendanc
 import 'package:attendance_flutter/features/dashboard/data/repository/attendance_repository_impl.dart';
 import 'package:attendance_flutter/features/dashboard/domain/usecase/clockin_usecase.dart';
 import 'package:attendance_flutter/features/dashboard/domain/usecase/clockout_usecase.dart';
+import 'package:attendance_flutter/features/dashboard/domain/usecase/today_attendance_usecase.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/state/attendance_state.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/view_model/attendance_view_model.dart';
 import 'package:attendance_flutter/features/leave/data/data_source/leave_data_source.dart';
@@ -65,13 +66,7 @@ final authSessionProvider = NotifierProvider<AuthSessionNotifier, bool>(
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
-  late final ApiClient apiClient;
-  apiClient = ApiClient(dio: ref.read(dioProvider));
-  final token = ref.read(appSharedPrefsProvider).getAuthToken();
-  if (token != null && token.isNotEmpty) {
-    apiClient.setAuthToken(token);
-  }
-  return apiClient;
+  return ApiClient();
 });
 
 final authDataSourceProvider = Provider<AuthDataSource>((ref) {
@@ -124,13 +119,19 @@ final clockOutUseCaseProvider = Provider(
   ),
 );
 
+final todayAttendanceUsecaseProvider = Provider(
+  (ref) => TodayAttendanceUsecase(
+    iAttendanceRepository: ref.read(attendanceRepositoyImplProvider),
+  ),
+);
+
 final attendanceViewModelProvider =
     NotifierProvider<AttendanceViewModel, AttendanceState>(() {
       return AttendanceViewModel();
     });
 
 final currentTimeProvider = StreamProvider.autoDispose<DateTime>((ref) {
-  return Stream.periodic(const Duration(minutes: 1), (_) => DateTime.now());
+  return Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now());
 });
 
 // ================================= Leave Provider =================================

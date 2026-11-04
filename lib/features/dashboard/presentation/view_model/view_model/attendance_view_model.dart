@@ -8,11 +8,12 @@ import 'package:geolocator/geolocator.dart';
 
 class AttendanceViewModel extends Notifier<AttendanceState> {
   @override
-  build() {
+  AttendanceState build() {
     return AttendanceState.initial();
   }
 
   Future<void> clockInAttendance() async {
+    if (state.isLoading || state.isFetchingToday) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -31,32 +32,33 @@ class AttendanceViewModel extends Notifier<AttendanceState> {
         ),
       );
 
-      print(position.latitude);
-      print(position.longitude);
-      print(position.accuracy);
+      if (!ref.mounted) return;
 
       result.fold(
         (failure) {
           state = state.copyWith(
             isLoading: false,
             errorMessage: failure.message,
-            attendance: null,
           );
         },
         (clockOut) {
           state = state.copyWith(
             isLoading: false,
             successMessage: 'Clock-In successful',
+            hasLoadedToday: true,
+            todayErrorMessage: null,
             attendance: clockOut,
           );
         },
       );
     } catch (error) {
+      if (!ref.mounted) return;
       state = state.copyWith(isLoading: false, errorMessage: error.toString());
     }
   }
 
   Future<void> clockOutAttendance() async {
+    if (state.isLoading || state.isFetchingToday) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -75,28 +77,60 @@ class AttendanceViewModel extends Notifier<AttendanceState> {
         ),
       );
 
-      print(position.latitude);
-      print(position.longitude);
-      print(position.accuracy);
+      if (!ref.mounted) return;
 
       result.fold(
         (failure) {
           state = state.copyWith(
             isLoading: false,
             errorMessage: failure.message,
-            attendance: null,
           );
         },
         (clockIn) {
           state = state.copyWith(
             isLoading: false,
             successMessage: 'Clock-out successful',
+            hasLoadedToday: true,
+            todayErrorMessage: null,
             attendance: clockIn,
           );
         },
       );
     } catch (error) {
+      if (!ref.mounted) return;
       state = state.copyWith(isLoading: false, errorMessage: error.toString());
+    }
+  }
+
+  Future<void> todayAttendance() async {
+    if (state.isLoading || state.isFetchingToday) return;
+    state = state.copyWith(
+      isFetchingToday: true,
+      todayErrorMessage: null,
+      successMessage: null,
+    );
+
+    try {
+      final result = await ref.read(todayAttendanceUsecaseProvider).call();
+      if (!ref.mounted) return;
+      result.fold(
+        (failure) => state = state.copyWith(
+          isFetchingToday: false,
+          todayErrorMessage: failure.message,
+        ),
+        (attendance) => state = state.copyWith(
+          isFetchingToday: false,
+          hasLoadedToday: true,
+          todayErrorMessage: null,
+          attendance: attendance,
+        ),
+      );
+    } catch (error) {
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isFetchingToday: false,
+        todayErrorMessage: error.toString(),
+      );
     }
   }
 }

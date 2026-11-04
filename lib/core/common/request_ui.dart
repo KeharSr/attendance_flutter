@@ -264,8 +264,6 @@ class RequestIntro extends StatelessWidget {
   );
 }
 
-
-
 class RequestHistoryTile extends StatelessWidget {
   const RequestHistoryTile({
     required this.title,
@@ -326,7 +324,8 @@ class RequestHistoryTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: icon, title + detail, status pill
+                // Keep the status beside the date when space permits, and wrap
+                // it below the date on narrow screens or at large text sizes.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -348,47 +347,53 @@ class RequestHistoryTile extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: requestInk,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  color: requestInk,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.fromLTRB(7, 4, 10, 4),
+                                decoration: BoxDecoration(
+                                  color: color.withValues(alpha: .1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(statusIcon, size: 14, color: color),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        statusLabel,
+                                        style: TextStyle(
+                                          color: color,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 5),
                           Text(
                             detail,
                             style: const TextStyle(
                               color: requestMuted,
                               fontSize: 13,
                               height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(7, 4, 10, 4),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: .1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(statusIcon, size: 14, color: color),
-                          const SizedBox(width: 4),
-                          Text(
-                            statusLabel,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -498,7 +503,6 @@ class RequestHistoryTile extends StatelessWidget {
     );
   }
 }
-
 
 class RequestHistoryList extends StatelessWidget {
   const RequestHistoryList({

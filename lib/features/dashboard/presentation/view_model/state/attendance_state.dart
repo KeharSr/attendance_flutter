@@ -5,12 +5,18 @@ class AttendanceState extends Equatable {
   static const _notProvided = Object();
 
   final bool isLoading;
+  final bool isFetchingToday;
+  final bool hasLoadedToday;
+  final String? todayErrorMessage;
   final String? errorMessage;
   final String? successMessage;
   final AttendanceEntity? attendance;
 
   const AttendanceState({
     required this.isLoading,
+    this.isFetchingToday = false,
+    this.hasLoadedToday = false,
+    this.todayErrorMessage,
     this.errorMessage,
     this.successMessage,
     this.attendance,
@@ -27,12 +33,20 @@ class AttendanceState extends Equatable {
 
   AttendanceState copyWith({
     bool? isLoading,
+    bool? isFetchingToday,
+    bool? hasLoadedToday,
+    Object? todayErrorMessage = _notProvided,
     Object? errorMessage = _notProvided,
     Object? successMessage = _notProvided,
     Object? attendance = _notProvided,
   }) {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
+      isFetchingToday: isFetchingToday ?? this.isFetchingToday,
+      hasLoadedToday: hasLoadedToday ?? this.hasLoadedToday,
+      todayErrorMessage: identical(todayErrorMessage, _notProvided)
+          ? this.todayErrorMessage
+          : todayErrorMessage as String?,
       errorMessage: identical(errorMessage, _notProvided)
           ? this.errorMessage
           : errorMessage as String?,
@@ -48,6 +62,9 @@ class AttendanceState extends Equatable {
   @override
   List<Object?> get props => [
     isLoading,
+    isFetchingToday,
+    hasLoadedToday,
+    todayErrorMessage,
     errorMessage,
     successMessage,
     attendance,

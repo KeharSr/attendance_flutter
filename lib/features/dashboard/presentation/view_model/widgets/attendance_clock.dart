@@ -15,6 +15,7 @@ class AttendanceClock extends StatelessWidget {
     required this.loading,
     required this.elapsed,
     required this.onToggle,
+    this.loadingMessage = 'Verifying location...',
     this.checkIn,
     this.fullRingDuration = const Duration(hours: 8),
     super.key,
@@ -25,7 +26,8 @@ class AttendanceClock extends StatelessWidget {
   final bool completed;
   final bool loading;
   final Duration elapsed;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
+  final String loadingMessage;
   final DateTime? checkIn;
   final Duration fullRingDuration;
 
@@ -38,7 +40,9 @@ class AttendanceClock extends StatelessWidget {
             1.0,
           )
         : 0.0;
-    final status = working
+    final status = loading && !recorded
+        ? loadingMessage
+        : working
         ? 'Working'
         : completed
         ? 'Session complete'
@@ -164,18 +168,18 @@ class AttendanceClock extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 child: loading
-                    ? const Row(
+                    ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox.square(
                             dimension: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              semanticsLabel: 'Verifying location',
+                              semanticsLabel: loadingMessage,
                             ),
                           ),
-                          SizedBox(width: 10),
-                          Text('Please wait'),
+                          const SizedBox(width: 10),
+                          const Text('Please wait'),
                         ],
                       )
                     : Text(working ? 'Clock out' : 'Clock in'),
@@ -185,7 +189,7 @@ class AttendanceClock extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             loading
-                ? 'Verifying location...'
+                ? loadingMessage
                 : working
                 ? 'Your work session is in progress.'
                 : completed

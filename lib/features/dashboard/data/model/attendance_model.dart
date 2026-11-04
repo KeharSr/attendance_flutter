@@ -1,4 +1,3 @@
-import 'package:attendance_flutter/features/auth/data/model/auth_api_model.dart';
 import 'package:attendance_flutter/features/dashboard/domain/entity/attendance_entity.dart';
 import 'package:json_annotation/json_annotation.dart';
 part 'attendance_model.g.dart';

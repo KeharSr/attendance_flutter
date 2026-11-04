@@ -50,4 +50,12 @@ class AttendanceDataSource implements IAttendanceDataSource {
       newResponse["data"] as Map<String, dynamic>,
     );
   }
+
+  @override
+  Future<AttendanceModel?> fetchTodayAttendance() async {
+    final response = await _apiClient.get(ApiEndpoints.todayAttendance);
+    final data = response.data['data'];
+    if (data == null) return null;
+    return AttendanceModel.fromJson(data as Map<String, dynamic>);
+  }
 }

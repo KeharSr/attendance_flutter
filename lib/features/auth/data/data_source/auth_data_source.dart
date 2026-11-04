@@ -56,9 +56,6 @@ class AuthDataSource implements IAuthDataSource {
       data: {"phone": phone, "password": password},
     );
 
-    final extractedToken = response.data['data']["token"];
-    _apiClient.setAuthToken(extractedToken);
-    await _appSharedPrefs.saveAuthToken(extractedToken);
     return AuthApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 }

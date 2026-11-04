@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/error/failure.dart';
 import 'package:attendance_flutter/features/dashboard/data/data_source/attendance_data_source.dart';
 import 'package:attendance_flutter/features/dashboard/domain/entity/attendance_entity.dart';
@@ -48,6 +49,25 @@ class AttendanceRepositoryImpl implements IAttendanceRepository {
       return Right((resultToEntity));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AttendanceEntity?>> getTodayAttendance() async {
+    try {
+      final result = await _attendanceDataSource.fetchTodayAttendance();
+      final resultToEntity = result?.toEntity();
+      return Right(resultToEntity);
+    } on ApiException catch (error) {
+      return Left(
+        ServerFailure(message: error.message, statusCode: error.statusCode),
+      );
+    } catch (_) {
+      return const Left(
+        ServerFailure(
+          message: "Unable to load today's attendance. Please try again.",
+        ),
+      );
     }
   }
 }

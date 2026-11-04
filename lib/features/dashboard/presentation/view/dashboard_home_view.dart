@@ -10,11 +10,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const _ink = Color(0xFF182230);
 const _muted = Color(0xFF667085);
 
-class DashboardHomeView extends ConsumerWidget {
+class DashboardHomeView extends ConsumerStatefulWidget {
   const DashboardHomeView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardHomeView> createState() => _DashboardHomeViewState();
+}
+
+class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _refresh);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  Future<void> _refresh() =>
+      ref.read(attendanceViewModelProvider.notifier).todayAttendance();
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final attendance = ref.watch(attendanceViewModelProvider);
     final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
     final name = ref.read(appSharedPrefsProvider).getUserName()?.trim();
@@ -49,121 +74,159 @@ class DashboardHomeView extends ConsumerWidget {
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [
-            Text(
-              DateTimeUtils.formatDate(now),
-              style: const TextStyle(
-                color: _muted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0,
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            children: [
+              Text(
+                DateTimeUtils.formatDate(now),
+                style: const TextStyle(
+                  color: _muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              name == null || name.isEmpty
-                  ? '$greeting.'
-                  : '$greeting, ${name.split(' ').first}.',
-              style: const TextStyle(
-                color: _ink,
-                fontSize: 24,
-                height: 1.25,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -.9,
+              const SizedBox(height: 10),
+              Text(
+                name == null || name.isEmpty
+                    ? '$greeting.'
+                    : '$greeting, ${name.split(' ').first}.',
+                style: const TextStyle(
+                  color: _ink,
+                  fontSize: 24,
+                  height: 1.25,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -.9,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'View your attendance and manage requests.',
-              style: TextStyle(color: _muted, fontSize: 13),
-            ),
-            const SizedBox(height: 26),
-            AttendanceClock(
-              now: now,
-              working: working,
-              completed: end != null,
-              loading: attendance.isLoading,
-              elapsed: elapsed,
-              checkIn: start,
-              onToggle: () {
-                final notifier = ref.read(attendanceViewModelProvider.notifier);
-                if (working) {
-                  notifier.clockOutAttendance();
-                } else {
-                  notifier.clockInAttendance();
-                }
-              },
-            ),
-            const SizedBox(height: 24),
-            const _SectionTitle(
-              'Attendance summary',
-              subtitle: 'Your latest recorded session',
-            ),
-            const SizedBox(height: 12),
-            _Surface(
-              child: Column(
-                children: [
-                  _SessionRow(
-                    icon: Icons.login_rounded,
-                    label: 'Clock in',
-                    value: start == null
-                        ? 'Not recorded'
-                        : DateTimeUtils.formatTime(start),
-                    date: start,
-                  ),
-                  const Divider(height: 25, color: Color(0xFFF0F3F7)),
-                  _SessionRow(
-                    icon: Icons.logout_rounded,
-                    label: 'Clock out',
-                    value: end == null
-                        ? (working ? 'In progress' : 'Not recorded')
-                        : DateTimeUtils.formatTime(end),
-                    date: end,
-                  ),
-                ],
+              const SizedBox(height: 8),
+              const Text(
+                'View your attendance and manage requests.',
+                style: TextStyle(color: _muted, fontSize: 13),
               ),
-            ),
-            const SizedBox(height: 28),
-            const _SectionTitle(
-              'Requests',
-              subtitle: 'Manage your work records',
-            ),
-            const SizedBox(height: 12),
-            _Surface(
-              child: Column(
-                children: [
-                  _Shortcut(
-                    icon: Icons.date_range_outlined,
-                    title: 'Leave request',
-                    subtitle: 'Plan your time off',
-                    onTap: () => ref
-                        .read(dashboardNavigationProvider.notifier)
-                        .select(DashboardTab.leave),
+              const SizedBox(height: 26),
+              if (attendance.todayErrorMessage != null) ...[
+                _Surface(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Unable to refresh today's attendance",
+                        style: TextStyle(
+                          color: _ink,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        attendance.todayErrorMessage!,
+                        style: const TextStyle(color: _muted, fontSize: 13),
+                      ),
+                      TextButton(
+                        onPressed: attendance.isFetchingToday ? null : _refresh,
+                        child: const Text('Try again'),
+                      ),
+                    ],
                   ),
-                  const Divider(height: 25),
-                  _Shortcut(
-                    icon: Icons.schedule_outlined,
-                    title: 'Overtime request',
-                    subtitle: 'Submit extra working hours',
-                    onTap: () => ref
-                        .read(dashboardNavigationProvider.notifier)
-                        .select(DashboardTab.overtime),
-                  ),
-                  const Divider(height: 25),
-                  _Shortcut(
-                    icon: Icons.assignment_outlined,
-                    title: 'Attendance correction',
-                    subtitle: 'Report a missing entry',
-                    onTap: () => ref
-                        .read(dashboardNavigationProvider.notifier)
-                        .select(DashboardTab.missing),
-                  ),
-                ],
+                ),
+                const SizedBox(height: 16),
+              ],
+              AttendanceClock(
+                now: now,
+                working: working,
+                completed: end != null,
+                loading: attendance.isLoading || attendance.isFetchingToday,
+                loadingMessage: attendance.isFetchingToday
+                    ? "Loading today's attendance..."
+                    : 'Verifying location...',
+                elapsed: elapsed,
+                checkIn: start,
+                onToggle: !attendance.hasLoadedToday
+                    ? null
+                    : () {
+                        final notifier = ref.read(
+                          attendanceViewModelProvider.notifier,
+                        );
+                        if (working) {
+                          notifier.clockOutAttendance();
+                        } else {
+                          notifier.clockInAttendance();
+                        }
+                      },
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              const _SectionTitle(
+                'Attendance summary',
+                subtitle: 'Your latest recorded session',
+              ),
+              const SizedBox(height: 12),
+              _Surface(
+                child: Column(
+                  children: [
+                    _SessionRow(
+                      icon: Icons.login_rounded,
+                      label: 'Clock in',
+                      value: start == null
+                          ? 'Not recorded'
+                          : DateTimeUtils.formatTime(start),
+                      date: start,
+                    ),
+                    const Divider(height: 25, color: Color(0xFFF0F3F7)),
+                    _SessionRow(
+                      icon: Icons.logout_rounded,
+                      label: 'Clock out',
+                      value: end == null
+                          ? (working ? 'In progress' : 'Not recorded')
+                          : DateTimeUtils.formatTime(end),
+                      date: end,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+              const _SectionTitle(
+                'Requests',
+                subtitle: 'Manage your work records',
+              ),
+              const SizedBox(height: 12),
+              _Surface(
+                child: Column(
+                  children: [
+                    _Shortcut(
+                      icon: Icons.date_range_outlined,
+                      title: 'Leave request',
+                      subtitle: 'Plan your time off',
+                      onTap: () => ref
+                          .read(dashboardNavigationProvider.notifier)
+                          .select(DashboardTab.leave),
+                    ),
+                    const Divider(height: 25),
+                    _Shortcut(
+                      icon: Icons.schedule_outlined,
+                      title: 'Overtime request',
+                      subtitle: 'Submit extra working hours',
+                      onTap: () => ref
+                          .read(dashboardNavigationProvider.notifier)
+                          .select(DashboardTab.overtime),
+                    ),
+                    const Divider(height: 25),
+                    _Shortcut(
+                      icon: Icons.assignment_outlined,
+                      title: 'Attendance correction',
+                      subtitle: 'Report a missing entry',
+                      onTap: () => ref
+                          .read(dashboardNavigationProvider.notifier)
+                          .select(DashboardTab.missing),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

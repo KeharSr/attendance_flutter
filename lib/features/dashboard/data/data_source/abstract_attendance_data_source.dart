@@ -12,4 +12,6 @@ abstract interface class IAttendanceDataSource {
     required double longitude,
     required num accuracy,
   });
+
+  Future<AttendanceModel?> fetchTodayAttendance();
 }

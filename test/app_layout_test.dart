@@ -1,3 +1,6 @@
+import 'helpers/attendance_repository_stub.dart';
+
+import 'package:attendance_flutter/features/dashboard/domain/usecase/today_attendance_usecase.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
@@ -25,6 +28,11 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        todayAttendanceUsecaseProvider.overrideWithValue(
+          TodayAttendanceUsecase(
+            iAttendanceRepository: StubAttendanceRepository(),
+          ),
+        ),
         currentTimeProvider.overrideWith(
           (ref) => Stream.value(DateTime(2026, 11, 4, 10)),
         ),

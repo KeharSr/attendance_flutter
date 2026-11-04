@@ -14,4 +14,6 @@ abstract interface class IAttendanceRepository {
     required double longitude,
     required num accuracy,
   });
+
+  Future<Either<Failure, AttendanceEntity?>> getTodayAttendance();
 }

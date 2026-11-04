@@ -6,7 +6,7 @@ class SharedPrefsKeys {
   static const String userPhoneKey = 'user_phone';
   static const String userNameKey = 'user_name';
   static const String userIdKey = 'user_id';
-  static const String authTokenKey = 'auth_token';
+
 }
 
 class AppSharedPrefs {
@@ -41,19 +41,13 @@ class AppSharedPrefs {
     return _sharedPreferences.getString(SharedPrefsKeys.userIdKey);
   }
 
-  Future<void> saveAuthToken(String token) async {
-    await _sharedPreferences.setString(SharedPrefsKeys.authTokenKey, token);
-  }
-
-  String? getAuthToken() {
-    return _sharedPreferences.getString(SharedPrefsKeys.authTokenKey);
-  }
+ 
 
   Future<void> removeSession() async {
     await _sharedPreferences.remove(SharedPrefsKeys.isUserLoggedIn);
     await _sharedPreferences.remove(SharedPrefsKeys.userPhoneKey);
     await _sharedPreferences.remove(SharedPrefsKeys.userNameKey);
     await _sharedPreferences.remove(SharedPrefsKeys.userIdKey);
-    await _sharedPreferences.remove(SharedPrefsKeys.authTokenKey);
+
   }
 }

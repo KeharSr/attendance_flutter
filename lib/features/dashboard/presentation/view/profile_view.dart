@@ -122,7 +122,6 @@ class ProfileView extends ConsumerWidget {
                       icon: const Icon(Icons.logout, size: 20),
                       label: const Text('Sign out'),
                       onPressed: () async {
-                        ref.read(apiClientProvider).clearAuthToken();
                         await ref.read(appSharedPrefsProvider).removeSession();
                         if (!context.mounted) return;
                         ref.read(authSessionProvider.notifier).markLoggedOut();
