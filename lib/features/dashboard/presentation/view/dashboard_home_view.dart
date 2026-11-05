@@ -19,6 +19,7 @@ class DashboardHomeView extends ConsumerStatefulWidget {
 
 class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
   late final AppLifecycleListener _lifecycle;
+  bool _refreshAfterCurrentRequest = false;
 
   @override
   void initState() {
@@ -32,6 +33,15 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
   Future<void> _refresh() =>
       ref.read(attendanceViewModelProvider.notifier).todayAttendance();
 
+  void _refreshForNewDay() {
+    final attendance = ref.read(attendanceViewModelProvider);
+    if (attendance.isLoading || attendance.isFetchingToday) {
+      _refreshAfterCurrentRequest = true;
+    } else {
+      _refresh();
+    }
+  }
+
   @override
   void dispose() {
     _lifecycle.dispose();
@@ -43,7 +53,24 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
     final attendance = ref.watch(attendanceViewModelProvider);
     final now = ref.watch(currentTimeProvider).value ?? DateTime.now();
     final name = ref.read(appSharedPrefsProvider).getUserName()?.trim();
+    ref.listen(currentTimeProvider, (previous, next) {
+      final before = previous?.value;
+      final after = next.value;
+      if (before != null &&
+          after != null &&
+          !DateUtils.isSameDay(before, after)) {
+        _refreshForNewDay();
+      }
+    });
     ref.listen<AttendanceState>(attendanceViewModelProvider, (previous, next) {
+      if (_refreshAfterCurrentRequest &&
+          !next.isLoading &&
+          !next.isFetchingToday) {
+        _refreshAfterCurrentRequest = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _refreshForNewDay();
+        });
+      }
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
         AppSnackBar.success(context, next.successMessage!);
@@ -53,13 +80,13 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
         AppSnackBar.error(context, next.errorMessage!);
       }
     });
-    final start = DateTimeUtils.parseBackendDateTime(
-      attendance.attendance?.checkIn,
-    );
-    final end = DateTimeUtils.parseBackendDateTime(
-      attendance.attendance?.checkout,
-    );
-    final working = start != null && end == null;
+    final record = attendance.attendance;
+    final isToday = record?.isForDate(now) ?? false;
+    final todayRecord = isToday ? record : null;
+    final start = DateTimeUtils.parseBackendDateTime(todayRecord?.checkIn);
+    final end = DateTimeUtils.parseBackendDateTime(todayRecord?.checkout);
+    final completedToday = todayRecord?.checkout != null;
+    final working = start != null && !completedToday;
     final duration = start == null
         ? Duration.zero
         : (end ?? now).difference(start);
@@ -138,14 +165,17 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
               AttendanceClock(
                 now: now,
                 working: working,
-                completed: end != null,
+                completed: completedToday,
                 loading: attendance.isLoading || attendance.isFetchingToday,
                 loadingMessage: attendance.isFetchingToday
                     ? "Loading today's attendance..."
                     : 'Verifying location...',
                 elapsed: elapsed,
                 checkIn: start,
-                onToggle: !attendance.hasLoadedToday
+                onToggle:
+                    !attendance.hasLoadedToday ||
+                        completedToday ||
+                        (record != null && !isToday)
                     ? null
                     : () {
                         final notifier = ref.read(

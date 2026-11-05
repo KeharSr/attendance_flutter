@@ -1,3 +1,6 @@
+import 'package:attendance_flutter/core/common/request_dialogs.dart';
+import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
+import 'package:attendance_flutter/features/leave/presentation/widgets/edit_leave_dialog.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/app_date_field.dart';
@@ -22,6 +25,27 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
     super.dispose();
   }
 
+  void _editLeave(LeaveEntity request) {
+    if (ref.read(leaveViewModelProvider).isLoading) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => EditLeaveDialog(request: request),
+    );
+  }
+
+  Future<void> _deleteLeave(LeaveEntity request) async {
+    if (ref.read(leaveViewModelProvider).isLoading) return;
+    final confirmed = await showDeleteRequestDialog(
+      context,
+      title: 'Delete leave request?',
+    );
+    if (!confirmed || !mounted) return;
+    await ref
+        .read(leaveViewModelProvider.notifier)
+        .deleteLeave(leaveRequestId: request.id.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(leaveViewModelProvider);
@@ -29,9 +53,11 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
         AppSnackBar.success(context, next.successMessage!);
-        _formKey.currentState?.reset();
-        _reasonController.clear();
-        ref.read(leaveViewModelProvider.notifier).clearSelectedDates();
+        if (next.successMessage == 'Leave request submitted for review.') {
+          _formKey.currentState?.reset();
+          _reasonController.clear();
+          ref.read(leaveViewModelProvider.notifier).clearSelectedDates();
+        }
       }
       if (previous?.errorMessage != next.errorMessage &&
           next.errorMessage != null) {
@@ -45,6 +71,8 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
         }
       },
       history: LeaveHistoryView(
+        onEdit: _editLeave,
+        onDelete: _deleteLeave,
         requests: state.requests,
         isLoading: state.isLoading,
         errorMessage: state.errorMessage,

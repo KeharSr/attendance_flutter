@@ -14,20 +14,23 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final startupComplete = ref.watch(splashViewModelProvider);
     final isUserLoggedIn = ref.watch(authSessionProvider);
+    final authState = ref.watch(authViewModelProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GBN Store HRMS',
       theme: buildAppTheme(),
-      home: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 450),
-        switchInCurve: Curves.easeOut,
-        child: !startupComplete
-            ? const SplashView(key: ValueKey('splash'))
-            : isUserLoggedIn
-            ? const DashboardView(key: ValueKey('dashboard'))
-            : const LoginView(key: ValueKey('login')),
-      ),
+      home: !startupComplete
+          ? const SplashView(key: ValueKey('splash'))
+          : isUserLoggedIn
+          ? DashboardView(
+              key: const ValueKey('dashboard'),
+              message: authState.successMessage,
+            )
+          : LoginView(
+              key: const ValueKey('login'),
+              message: authState.logoutMessage,
+            ),
     );
   }
 }

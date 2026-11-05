@@ -9,4 +9,13 @@ abstract interface class IMissingAttendanceDataSource {
   });
 
   Future<List<MissingAttendanceApiModel>> getMissingAttendance();
+  Future<MissingAttendanceApiModel> editMissingAttendance({
+    required String requestId,
+    required String missingDate,
+    required String? requestedCheckIn,
+    required String? requestedCheckOut,
+    required String reason,
+  });
+
+  Future<void> deleteMissingAttendance({required String requestId});
 }

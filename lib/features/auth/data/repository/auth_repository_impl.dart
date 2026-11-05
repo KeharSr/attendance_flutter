@@ -1,12 +1,13 @@
+import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/error/failure.dart';
-import 'package:attendance_flutter/features/auth/data/data_source/auth_data_source.dart';
+import 'package:attendance_flutter/features/auth/data/data_source/abstract_auth_data_source.dart';
 import 'package:attendance_flutter/features/auth/data/model/auth_api_model.dart';
 import 'package:attendance_flutter/features/auth/domain/entity/auth_entity.dart';
 import 'package:attendance_flutter/features/auth/domain/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
-  final AuthDataSource _authDataSource;
+  final IAuthDataSource _authDataSource;
 
   const AuthRepositoryImpl({required this._authDataSource});
 
@@ -36,6 +37,21 @@ class AuthRepositoryImpl implements IAuthRepository {
       return Right(result.toEntity());
     } catch (e) {
       return Left((ServerFailure(message: e.toString())));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> logoutUser() async {
+    try {
+      return Right(await _authDataSource.logoutUser());
+    } on ApiException catch (error) {
+      return Left(
+        ServerFailure(message: error.message, statusCode: error.statusCode),
+      );
+    } catch (_) {
+      return const Left(
+        ServerFailure(message: 'Unable to sign out. Please try again.'),
+      );
     }
   }
 }

@@ -8,10 +8,12 @@ class AppDateField extends StatelessWidget {
     required this.label,
     required this.date,
     required this.onTap,
+    this.enabled = true,
   });
   final String label;
   final DateTime? date;
   final VoidCallback onTap;
+  final bool enabled;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,6 +22,7 @@ class AppDateField extends StatelessWidget {
       TextFormField(
         key: ValueKey('$label-${date?.toIso8601String()}'),
         readOnly: true,
+        enabled: enabled,
         onTap: onTap,
         initialValue: date == null ? null : DateTimeUtils.formatDate(date!),
         style: const TextStyle(color: requestInk, fontSize: 14),

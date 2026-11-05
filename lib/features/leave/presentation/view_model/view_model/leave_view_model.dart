@@ -1,3 +1,5 @@
+import 'package:attendance_flutter/features/leave/domain/usecase/delete_leave_usecase.dart';
+import 'package:attendance_flutter/features/leave/domain/usecase/edit_leave_usecase.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/domain/usecase/submit_leave_usecase.dart';
 import 'package:attendance_flutter/features/leave/presentation/view_model/state/leave_state.dart';
@@ -29,6 +31,7 @@ class LeaveViewModel extends Notifier<LeaveState> {
     required DateTime endDate,
     required String reason,
   }) async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -55,6 +58,7 @@ class LeaveViewModel extends Notifier<LeaveState> {
   }
 
   Future<void> getAllLeaves() async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -71,6 +75,85 @@ class LeaveViewModel extends Notifier<LeaveState> {
       ),
       (requests) =>
           state = state.copyWith(isLoading: false, requests: requests),
+    );
+  }
+
+  Future<bool> editLeave({
+    required String leaveRequestId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+  }) async {
+    if (state.isLoading) return false;
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+    final result = await ref
+        .read(editLeaveUsecaseProvider)
+        .call(
+          EditLeaveParams(
+            leaveRequestId: leaveRequestId,
+            startDate: startDate,
+            endDate: endDate,
+            reason: reason,
+          ),
+        );
+    if (!ref.mounted) return false;
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
+        return false;
+      },
+      (updated) {
+        state = state.copyWith(
+          isLoading: false,
+          requests: state.requests
+              .map(
+                (item) => item.id.toString() == leaveRequestId ? updated : item,
+              )
+              .toList(),
+          successMessage: 'Leave request updated successfully.',
+        );
+        return true;
+      },
+    );
+  }
+
+  Future<bool> deleteLeave({required String leaveRequestId}) async {
+    if (state.isLoading) return false;
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+    final result = await ref
+        .read(deleteLeaveUsecaseProvider)
+        .call(DeleteLeaveParams(leaveRequestId: leaveRequestId));
+    if (!ref.mounted) return false;
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
+        return false;
+      },
+      (deleted) {
+        if (!deleted) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: 'Unable to delete the request. Please try again.',
+          );
+          return false;
+        }
+        state = state.copyWith(
+          isLoading: false,
+          requests: state.requests
+              .where((item) => item.id.toString() != leaveRequestId)
+              .toList(),
+          successMessage: 'Leave request deleted successfully.',
+        );
+        return true;
+      },
     );
   }
 }

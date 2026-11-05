@@ -10,4 +10,12 @@ abstract interface class ILeaveRepository {
   });
 
   Future<Either<Failure, List<LeaveEntity>>> getAllLeaves();
+  Future<Either<Failure, LeaveEntity>> editLeave({
+    required String leaveRequestId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+  });
+
+  Future<Either<Failure, bool>> deleteLeave({required String leaveRequestId});
 }

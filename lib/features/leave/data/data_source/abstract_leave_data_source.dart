@@ -8,4 +8,12 @@ abstract interface class ILeaveDataSource {
   });
 
   Future<List<LeaveModel>> getAllLeaves();
+
+  Future<LeaveModel> editLeave({
+    required String leaveRequestId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+  });
+  Future<void> deleteLeave({required String leaveRequestId});
 }

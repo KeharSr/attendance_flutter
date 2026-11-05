@@ -27,6 +27,15 @@ class AttendanceEntity extends Equatable {
     this.checkoutOutAccuracyM,
   });
 
+  /// Work dates are calendar dates; do not shift them into another timezone.
+  bool isForDate(DateTime date) {
+    final recordedDate = DateTime.tryParse(workDate);
+    return recordedDate != null &&
+        recordedDate.year == date.year &&
+        recordedDate.month == date.month &&
+        recordedDate.day == date.day;
+  }
+
   @override
   List<Object?> get props => [
     id,

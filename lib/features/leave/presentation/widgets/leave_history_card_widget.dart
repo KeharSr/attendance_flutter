@@ -4,8 +4,17 @@ import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dar
 import 'package:flutter/material.dart';
 
 class LeaveHistoryCardWidget extends StatelessWidget {
-  const LeaveHistoryCardWidget({required this.request, super.key});
+  const LeaveHistoryCardWidget({
+    required this.request,
+    this.onEdit,
+    this.onDelete,
+    this.actionsEnabled = true,
+    super.key,
+  });
   final LeaveEntity request;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool actionsEnabled;
   @override
   Widget build(BuildContext context) {
     return RequestHistoryTile(
@@ -13,6 +22,9 @@ class LeaveHistoryCardWidget extends StatelessWidget {
       detail: 'Through ${DateTimeUtils.formatDate(request.endDate)}',
       reason: request.reason,
       status: request.status,
+      onEdit: onEdit,
+      onDelete: onDelete,
+      actionsEnabled: actionsEnabled,
     );
   }
 }

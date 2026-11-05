@@ -7,11 +7,7 @@ import 'package:attendance_flutter/features/auth/data/data_source/abstract_auth_
 import 'package:attendance_flutter/features/auth/data/model/auth_api_model.dart';
 
 class AuthDataSource implements IAuthDataSource {
-  AuthDataSource({
-    required ApiClient apiClient,
-    required AppSharedPrefs appSharedPrefs,
-  }) : _apiClient = apiClient,
-       _appSharedPrefs = appSharedPrefs;
+  AuthDataSource({required this._apiClient, required this._appSharedPrefs});
 
   final ApiClient _apiClient;
   final AppSharedPrefs _appSharedPrefs;
@@ -57,5 +53,25 @@ class AuthDataSource implements IAuthDataSource {
     );
 
     return AuthApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<String> logoutUser() async {
+    // Keep credentials until the authenticated backend session is revoked.
+    final response = await _apiClient.post<Map<String, dynamic>>(
+      ApiEndpoints.logout,
+    );
+    final json = response.data;
+    if (json == null || json['success'] != true) {
+      throw ApiException(
+        message: json == null
+            ? 'Unable to sign out. Please try again.'
+            : _message(json),
+        statusCode: response.statusCode,
+      );
+    }
+    await _apiClient.clearTokens();
+    await _appSharedPrefs.removeSession();
+    return _message(json);
   }
 }

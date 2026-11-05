@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/features/dashboard/presentation/view_model/view_model/dashboard_navigation.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/auth/domain/entity/auth_entity.dart';
 import 'package:attendance_flutter/features/auth/domain/usecase/create_user_usecase.dart';
@@ -56,25 +57,20 @@ class AuthViewModel extends Notifier<AuthState> {
     required String phone,
     required String password,
   }) async {
+    if (state.isLoading || state.isLoggingOut) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
       successMessage: null,
+      logoutMessage: null,
     );
-
-    final loginUsecase = ref.read(loginUserUseCaseProvider);
-
-    final result = await loginUsecase.call(
-      LoginParams(phone: phone, password: password),
-    );
-
-    result.fold(
-      (failure) {
-        state = state.copyWith(
-          errorMessage: failure.message,
-          successMessage: null,
-          isLoading: false,
-        );
+    final result = await ref
+        .read(loginUserUseCaseProvider)
+        .call(LoginParams(phone: phone, password: password));
+    if (!ref.mounted) return;
+    await result.fold<Future<void>>(
+      (failure) async {
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
       },
       (user) async {
         await ref
@@ -84,12 +80,42 @@ class AuthViewModel extends Notifier<AuthState> {
               name: user.name,
               phone: user.phone,
             );
+        if (!ref.mounted) return;
         state = state.copyWith(
-          successMessage: 'Login successful',
-          errorMessage: null,
           isLoading: false,
+          successMessage: 'Login successful',
           user: user,
         );
+        ref.read(authSessionProvider.notifier).markLoggedIn();
+      },
+    );
+  }
+
+  Future<void> logoutUser() async {
+    if (state.isLoading || state.isLoggingOut) return;
+    state = state.copyWith(
+      isLoggingOut: true,
+      errorMessage: null,
+      successMessage: null,
+      logoutMessage: null,
+    );
+    final result = await ref.read(logoutUserUsecaseProvider).call();
+    if (!ref.mounted) return;
+    result.fold(
+      (failure) {
+        state = state.copyWith(
+          isLoggingOut: false,
+          errorMessage: failure.message,
+        );
+      },
+      (message) {
+        state = AuthState.initial().copyWith(logoutMessage: message);
+        ref.read(authSessionProvider.notifier).markLoggedOut();
+        ref.invalidate(attendanceViewModelProvider);
+        ref.invalidate(leaveViewModelProvider);
+        ref.invalidate(overtimeViewModelProvider);
+        ref.invalidate(missingAttendanceViewModelProvider);
+        ref.invalidate(dashboardNavigationProvider);
       },
     );
   }

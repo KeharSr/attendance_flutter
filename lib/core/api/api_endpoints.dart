@@ -8,6 +8,7 @@ class ApiEndpoints {
   // =======================user routes========================
   static const String loginUser = "$baseUrl/users/loginUser";
   static const String refreshToken = "$baseUrl/users/refreshToken";
+  static const String logout = "$baseUrl/users/logout";
 
   // =======================attendance routes========================
   static const String clockIn = "$baseUrl/attendance/clockin";
@@ -17,6 +18,10 @@ class ApiEndpoints {
   // =======================leave routes========================
   static const String leaveRequest = "$baseUrl/leave/request";
   static const String allLeaveRequest = "$baseUrl/leave/all";
+  static String editLeave(String requestId) =>
+      "$baseUrl/leave/request/$requestId";
+  static String deleteLeave(String requestId) =>
+      "$baseUrl/leave/request/$requestId";
 
   // =======================overtime routes========================
   static const String overtimeRequest = "$baseUrl/overtime/request";
@@ -31,4 +36,8 @@ class ApiEndpoints {
       "$baseUrl/missing-attendance/request";
   static const String fetchMissingAttendance =
       "$baseUrl/missing-attendance/get-all-request";
+  static String editMissingAttendance(String requestId) =>
+      "$baseUrl/missing-attendance/request/$requestId";
+  static String deleteMissingAttendance(String requestId) =>
+      "$baseUrl/missing-attendance/request/$requestId";
 }

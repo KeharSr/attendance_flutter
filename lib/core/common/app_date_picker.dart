@@ -4,17 +4,26 @@ Future<DateTime?> showAppDatePicker(
   BuildContext context, {
   DateTime? selectedDate,
   DateTime? firstDate,
+  DateTime? lastDate,
   String helpText = 'Select date',
 }) {
   final today = DateUtils.dateOnly(DateTime.now());
   final minimumDate = DateUtils.dateOnly(firstDate ?? today);
-  final initialDate = DateUtils.dateOnly(selectedDate ?? minimumDate);
+  final maximumDate = DateUtils.dateOnly(
+    lastDate ?? DateTime(today.year + 2, today.month, today.day),
+  );
+  final requestedDate = DateUtils.dateOnly(selectedDate ?? minimumDate);
+  final initialDate = requestedDate.isBefore(minimumDate)
+      ? minimumDate
+      : requestedDate.isAfter(maximumDate)
+      ? maximumDate
+      : requestedDate;
 
   return showDatePicker(
     context: context,
-    initialDate: initialDate.isBefore(minimumDate) ? minimumDate : initialDate,
+    initialDate: initialDate,
     firstDate: minimumDate,
-    lastDate: DateTime(today.year + 2, today.month, today.day),
+    lastDate: maximumDate,
     helpText: helpText,
     cancelText: 'Cancel',
     confirmText: 'Select',

@@ -11,4 +11,15 @@ abstract interface class IMissingAttendanceRepository {
   });
 
   Future<Either<Failure, List<MissingAttendanceEntity>>> getMissingAttendance();
+  Future<Either<Failure, MissingAttendanceEntity>> editMissingAttendance({
+    required String requestId,
+    required String missingDate,
+    required String? requestedCheckIn,
+    required String? requestedCheckOut,
+    required String reason,
+  });
+
+  Future<Either<Failure, bool>> deleteMissingAttendance({
+    required String requestId,
+  });
 }

@@ -1,3 +1,6 @@
+import 'package:attendance_flutter/core/common/request_dialogs.dart';
+import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/edit_missing_attendance_dialog.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_date_field.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
@@ -30,6 +33,27 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
     super.dispose();
   }
 
+  void _editMissingAttendance(MissingAttendanceEntity request) {
+    if (ref.read(missingAttendanceViewModelProvider).isLoading) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => EditMissingAttendanceDialog(request: request),
+    );
+  }
+
+  Future<void> _deleteMissingAttendance(MissingAttendanceEntity request) async {
+    if (ref.read(missingAttendanceViewModelProvider).isLoading) return;
+    final confirmed = await showDeleteRequestDialog(
+      context,
+      title: 'Delete attendance report?',
+    );
+    if (!confirmed || !mounted) return;
+    await ref
+        .read(missingAttendanceViewModelProvider.notifier)
+        .deleteMissingAttendance(requestId: request.id.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(missingAttendanceViewModelProvider);
@@ -37,13 +61,15 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
         AppSnackBar.success(context, next.successMessage!);
-        _formKey.currentState?.reset();
-        _reasonController.clear();
-        setState(() {
-          _missingDate = null;
-          _checkIn = null;
-          _checkOut = null;
-        });
+        if (next.successMessage == 'Missing Attendance Created Successfully') {
+          _formKey.currentState?.reset();
+          _reasonController.clear();
+          setState(() {
+            _missingDate = null;
+            _checkIn = null;
+            _checkOut = null;
+          });
+        }
       }
       if (previous?.failureMessage != next.failureMessage &&
           next.failureMessage != null) {
@@ -72,6 +98,8 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
         onSubmit: _submit,
       ),
       history: MissingAttendanceHistoryView(
+        onEdit: _editMissingAttendance,
+        onDelete: _deleteMissingAttendance,
         requests: state.missingAttendance,
         isLoading: state.isLoading,
         errorMessage: state.failureMessage,

@@ -149,11 +149,11 @@ class AttendanceClock extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: loading ? null : onToggle,
+                onPressed: loading || completed ? null : onToggle,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: working ? _red : _green,
                   side: BorderSide(
-                    color: loading
+                    color: loading || completed || onToggle == null
                         ? AppColors.border
                         : working
                         ? _red
@@ -182,7 +182,13 @@ class AttendanceClock extends StatelessWidget {
                           const Text('Please wait'),
                         ],
                       )
-                    : Text(working ? 'Clock out' : 'Clock in'),
+                    : Text(
+                        completed
+                            ? 'Completed for today'
+                            : working
+                            ? 'Clock out'
+                            : 'Clock in',
+                      ),
               ),
             ),
           ),
@@ -193,7 +199,7 @@ class AttendanceClock extends StatelessWidget {
                 : working
                 ? 'Your work session is in progress.'
                 : completed
-                ? 'Your recorded session has ended.'
+                ? 'You have clocked out. You can clock in again tomorrow.'
                 : 'Location is verified when you clock in.',
             textAlign: TextAlign.center,
             style: const TextStyle(

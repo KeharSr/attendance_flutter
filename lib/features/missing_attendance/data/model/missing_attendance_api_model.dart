@@ -28,7 +28,9 @@ class MissingAttendanceApiModel {
       userId: _parseInt(json['user_id'], 'user_id'),
       missingDate: _parseString(json['missing_date']),
       requestedCheckIn: _parseString(json['requested_check_in']),
-      requestCheckOut: _parseString(json['request_check_out']),
+      requestCheckOut: _parseString(
+        json['requested_check_out'] ?? json['request_check_out'],
+      ),
       reason: _parseString(json['reason']),
       status: _parseString(json['status'], fallback: 'Pending'),
     );

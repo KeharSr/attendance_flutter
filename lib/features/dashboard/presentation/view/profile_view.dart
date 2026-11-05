@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,14 @@ class ProfileView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prefs = ref.watch(appSharedPrefsProvider);
+    final auth = ref.watch(authViewModelProvider);
+    ref.listen(authViewModelProvider, (previous, next) {
+      if (previous?.isLoggingOut == true &&
+          !next.isLoggingOut &&
+          next.errorMessage != null) {
+        AppSnackBar.error(context, next.errorMessage!);
+      }
+    });
     final savedName = prefs.getUserName()?.trim() ?? '';
     final name = savedName.isEmpty ? 'Employee' : savedName;
     final phone = prefs.getUserPhone()?.trim();
@@ -120,12 +129,14 @@ class ProfileView extends ConsumerWidget {
                         foregroundColor: AppColors.danger,
                       ),
                       icon: const Icon(Icons.logout, size: 20),
-                      label: const Text('Sign out'),
-                      onPressed: () async {
-                        await ref.read(appSharedPrefsProvider).removeSession();
-                        if (!context.mounted) return;
-                        ref.read(authSessionProvider.notifier).markLoggedOut();
-                      },
+                      label: Text(
+                        auth.isLoggingOut ? 'Signing out...' : 'Sign out',
+                      ),
+                      onPressed: auth.isLoggingOut || auth.isLoading
+                          ? null
+                          : () => ref
+                                .read(authViewModelProvider.notifier)
+                                .logoutUser(),
                     ),
                   ),
                 ],

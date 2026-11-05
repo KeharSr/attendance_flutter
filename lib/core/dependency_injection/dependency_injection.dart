@@ -1,3 +1,8 @@
+import 'package:attendance_flutter/features/auth/domain/usecase/logout_user_usecase.dart';
+import 'package:attendance_flutter/features/missing_attendance/domain/usecase/delete_missing_attendance_usecase.dart';
+import 'package:attendance_flutter/features/missing_attendance/domain/usecase/edit_missing_attendance_usecase.dart';
+import 'package:attendance_flutter/features/leave/domain/usecase/delete_leave_usecase.dart';
+import 'package:attendance_flutter/features/leave/domain/usecase/edit_leave_usecase.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
 import 'package:attendance_flutter/features/auth/data/data_source/auth_data_source.dart';
@@ -56,6 +61,10 @@ class AuthSessionNotifier extends Notifier<bool> {
   @override
   bool build() => ref.read(appSharedPrefsProvider).isUserLoggedIn();
 
+  void markLoggedIn() {
+    state = true;
+  }
+
   void markLoggedOut() {
     state = false;
   }
@@ -90,6 +99,11 @@ final loginUserUseCaseProvider = Provider<LoginUserUsecase>((ref) {
     iAuthRepository: ref.read(authRepositoryImplProvider),
   );
 });
+
+final logoutUserUsecaseProvider = Provider(
+  (ref) =>
+      LogoutUserUsecase(authRepository: ref.read(authRepositoryImplProvider)),
+);
 
 final authViewModelProvider = NotifierProvider<AuthViewModel, AuthState>(() {
   return AuthViewModel();
@@ -156,6 +170,14 @@ final getAllLeaveUseCaseProvider = Provider<GetAllLeaveUsecase>((ref) {
   );
 });
 
+final editLeaveUsecaseProvider = Provider(
+  (ref) => EditLeaveUsecase(repository: ref.read(leaveRepositoryProvider)),
+);
+
+final deleteLeaveUsecaseProvider = Provider(
+  (ref) => DeleteLeaveUsecase(repository: ref.read(leaveRepositoryProvider)),
+);
+
 final leaveViewModelProvider = NotifierProvider<LeaveViewModel, LeaveState>(
   LeaveViewModel.new,
 );
@@ -221,6 +243,18 @@ final createMissingAttendanceUsecaseProvider = Provider(
 final fetchMissingAttendanceUsecaseProvider = Provider(
   (ref) => FetchMissingAttendanceUsecase(
     iMissingAttendanceRepository: ref.read(missingAttendanceRepositoryProvider),
+  ),
+);
+
+final editMissingAttendanceUsecaseProvider = Provider(
+  (ref) => EditMissingAttendanceUsecase(
+    repository: ref.read(missingAttendanceRepositoryProvider),
+  ),
+);
+
+final deleteMissingAttendanceUsecaseProvider = Provider(
+  (ref) => DeleteMissingAttendanceUsecase(
+    repository: ref.read(missingAttendanceRepositoryProvider),
   ),
 );
 

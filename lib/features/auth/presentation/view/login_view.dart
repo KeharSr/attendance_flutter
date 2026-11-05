@@ -1,7 +1,6 @@
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
-import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +9,8 @@ const _ink = Color(0xFF182230);
 const _muted = Color(0xFF667085);
 
 class LoginView extends ConsumerStatefulWidget {
-  const LoginView({super.key});
+  const LoginView({this.message, super.key});
+  final String? message;
 
   @override
   ConsumerState<LoginView> createState() => _LoginViewState();
@@ -22,17 +22,20 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.message != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) AppSnackBar.success(context, widget.message!);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     ref.listen(authViewModelProvider, (previous, next) {
       if (!mounted) return;
-      if (next.successMessage != null &&
-          next.successMessage != previous?.successMessage) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => DashboardView(message: next.successMessage!),
-          ),
-        );
-      } else if (next.errorMessage != null &&
+      if (next.errorMessage != null &&
           next.errorMessage != previous?.errorMessage) {
         AppSnackBar.error(context, next.errorMessage!);
       }

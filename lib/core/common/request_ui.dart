@@ -272,6 +272,7 @@ class RequestHistoryTile extends StatelessWidget {
     required this.status,
     this.onEdit,
     this.onDelete,
+    this.actionsEnabled = true,
     this.icon,
     this.footer,
     super.key,
@@ -282,6 +283,7 @@ class RequestHistoryTile extends StatelessWidget {
   final String status;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool actionsEnabled;
 
   final IconData? icon;
 
@@ -465,12 +467,14 @@ class RequestHistoryTile extends StatelessWidget {
             const Divider(height: 1, color: _hairline),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 4,
+                runSpacing: 4,
                 children: [
                   if (onDelete != null)
                     TextButton.icon(
-                      onPressed: onDelete,
+                      onPressed: actionsEnabled ? onDelete : null,
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.danger,
                         shape: RoundedRectangleBorder(
@@ -483,7 +487,7 @@ class RequestHistoryTile extends StatelessWidget {
                   if (onEdit != null) ...[
                     const SizedBox(width: 4),
                     TextButton.icon(
-                      onPressed: onEdit,
+                      onPressed: actionsEnabled ? onEdit : null,
                       style: TextButton.styleFrom(
                         foregroundColor: requestAccent,
                         shape: RoundedRectangleBorder(

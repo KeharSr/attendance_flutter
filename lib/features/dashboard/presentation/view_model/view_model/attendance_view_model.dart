@@ -14,6 +14,17 @@ class AttendanceViewModel extends Notifier<AttendanceState> {
 
   Future<void> clockInAttendance() async {
     if (state.isLoading || state.isFetchingToday) return;
+    final record = state.attendance;
+    final now = ref.read(currentTimeProvider).value ?? DateTime.now();
+    if (record != null && record.isForDate(now)) {
+      state = state.copyWith(
+        successMessage: null,
+        errorMessage: record.checkout != null
+            ? 'Attendance is completed for today. You can clock in tomorrow.'
+            : 'You have already clocked in today.',
+      );
+      return;
+    }
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -59,6 +70,15 @@ class AttendanceViewModel extends Notifier<AttendanceState> {
 
   Future<void> clockOutAttendance() async {
     if (state.isLoading || state.isFetchingToday) return;
+    final record = state.attendance;
+    final now = ref.read(currentTimeProvider).value ?? DateTime.now();
+    if (record != null && record.isForDate(now) && record.checkout != null) {
+      state = state.copyWith(
+        successMessage: null,
+        errorMessage: 'You have already clocked out today.',
+      );
+      return;
+    }
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,

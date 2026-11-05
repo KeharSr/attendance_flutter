@@ -90,7 +90,16 @@ void main() {
       expect(painter(tester).fill, .375);
       expect(find.text('03:00:00'), findsOneWidget);
       expect(find.text('Session complete'), findsOneWidget);
-      expect(find.text('Clock in'), findsOneWidget);
+      expect(find.text('Completed for today'), findsOneWidget);
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.widgetWithText(OutlinedButton, 'Completed for today'),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(find.widgetWithText(OutlinedButton, 'Clock in'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

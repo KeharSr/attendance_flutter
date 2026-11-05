@@ -45,4 +45,31 @@ class MissingAttendanceDataSource implements IMissingAttendanceDataSource {
 
     return jsonData;
   }
+
+  @override
+  Future<MissingAttendanceApiModel> editMissingAttendance({
+    required String requestId,
+    required String missingDate,
+    required String? requestedCheckIn,
+    required String? requestedCheckOut,
+    required String reason,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiEndpoints.editMissingAttendance(requestId),
+      data: {
+        'missingDate': missingDate,
+        'requestedCheckIn': requestedCheckIn,
+        'requestedCheckOut': requestedCheckOut,
+        'reason': reason,
+      },
+    );
+    return MissingAttendanceApiModel.fromJson(
+      response.data['data'] as Map<String, dynamic>,
+    );
+  }
+
+  @override
+  Future<void> deleteMissingAttendance({required String requestId}) async {
+    await _apiClient.delete(ApiEndpoints.deleteMissingAttendance(requestId));
+  }
 }

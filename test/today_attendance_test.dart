@@ -36,7 +36,9 @@ void main() {
     'today endpoint handles both no record and a completed session',
     () async {
       Object? data;
-      final dio = Dio();
+      final apiClient = ApiClient();
+      final dio = apiClient.dio;
+      dio.interceptors.clear();
       dio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
@@ -53,9 +55,7 @@ void main() {
         ),
       );
       final repository = AttendanceRepositoryImpl(
-        attendanceDataSource: AttendanceDataSource(
-          apiClient: ApiClient(dio: dio),
-        ),
+        attendanceDataSource: AttendanceDataSource(apiClient: apiClient),
       );
       expect(
         await repository.getTodayAttendance(),
@@ -180,7 +180,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.fetches, 2);
       expect(find.text('04:00:00'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Clock in'), findsOneWidget);
+      expect(
+        find.widgetWithText(OutlinedButton, 'Completed for today'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.widgetWithText(OutlinedButton, 'Completed for today'),
+            )
+            .onPressed,
+        isNull,
+      );
       final clock = tester.widget<AttendanceClock>(
         find.byType(AttendanceClock),
       );
@@ -231,6 +242,188 @@ void main() {
       );
       expect(find.text("Unable to refresh today's attendance"), findsNothing);
       expect(repo.fetches, 2);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+  test('completed work date blocks a second clock-in and clock-out before API/location access', () async {
+    final completed = session(checkout: '2026-11-04T12:00:00');
+    final repo = StubAttendanceRepository()..result = Right(completed);
+    var clockApiReads = 0;
+    final container = ProviderContainer(
+      overrides: [
+        todayAttendanceUsecaseProvider.overrideWithValue(
+          TodayAttendanceUsecase(iAttendanceRepository: repo),
+        ),
+        currentTimeProvider.overrideWith(
+          (ref) => Stream.value(DateTime(2026, 11, 4, 15)),
+        ),
+        clockInUseCaseProvider.overrideWith((ref) {
+          clockApiReads++;
+          throw StateError('Clock-in must not run');
+        }),
+        clockOutUseCaseProvider.overrideWith((ref) {
+          clockApiReads++;
+          throw StateError('Clock-out must not run');
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(currentTimeProvider, (_, _) {});
+    addTearDown(subscription.close);
+    await container.read(currentTimeProvider.future);
+    final vm = container.read(attendanceViewModelProvider.notifier);
+    await vm.todayAttendance();
+    await vm.clockInAttendance();
+    expect(
+      container.read(attendanceViewModelProvider).errorMessage,
+      'Attendance is completed for today. You can clock in tomorrow.',
+    );
+    await vm.clockOutAttendance();
+    expect(
+      container.read(attendanceViewModelProvider).errorMessage,
+      'You have already clocked out today.',
+    );
+    expect(container.read(attendanceViewModelProvider).attendance, completed);
+    expect(clockApiReads, 0);
+  });
+
+  test(
+    'work dates compare calendar fields without shifting UTC date-only values',
+    () {
+      final completed = session(checkout: '2026-11-04T12:00:00');
+      expect(completed.isForDate(DateTime(2026, 11, 4, 23, 59)), isTrue);
+      expect(completed.isForDate(DateTime(2026, 11, 5)), isFalse);
+      final timestampWorkDate = AttendanceEntity(
+        id: 1,
+        userId: 7,
+        checkIn: completed.checkIn,
+        checkout: completed.checkout,
+        workDate: '2026-11-04T00:00:00.000Z',
+        checkInLatitude: 27.7,
+        checkInLongitude: 85.3,
+        checkInAccuracyM: 5,
+      );
+      expect(timestampWorkDate.isForDate(DateTime(2026, 11, 4)), isTrue);
+      expect(timestampWorkDate.isForDate(DateTime(2026, 11, 5)), isFalse);
+    },
+  );
+
+  testWidgets(
+    'completed attendance stays disabled until tomorrow has been refreshed',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final ticks = StreamController<DateTime>();
+      addTearDown(ticks.close);
+      final repo = StubAttendanceRepository()
+        ..result = Right(session(checkout: '2026-11-04T12:00:00'));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            todayAttendanceUsecaseProvider.overrideWithValue(
+              TodayAttendanceUsecase(iAttendanceRepository: repo),
+            ),
+            currentTimeProvider.overrideWith((ref) => ticks.stream),
+          ],
+          child: MaterialApp(
+            theme: buildAppTheme(),
+            home: const Scaffold(body: DashboardHomeView()),
+          ),
+        ),
+      );
+      ticks.add(DateTime(2026, 11, 4, 23, 59, 59));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.widgetWithText(OutlinedButton, 'Completed for today'),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester.widget<AttendanceClock>(find.byType(AttendanceClock)).onToggle,
+        isNull,
+      );
+      final tomorrow = Completer<Either<Failure, AttendanceEntity?>>();
+      repo.onFetch = () => tomorrow.future;
+      ticks.add(DateTime(2026, 11, 5));
+      await tester.pump();
+      await tester.pump();
+      expect(repo.fetches, 2);
+      expect(
+        tester
+            .widget<OutlinedButton>(find.byType(OutlinedButton).first)
+            .onPressed,
+        isNull,
+      );
+      tomorrow.complete(const Right(null));
+      await tester.pumpAndSettle();
+      expect(
+        find.widgetWithText(OutlinedButton, 'Completed for today'),
+        findsNothing,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.widgetWithText(OutlinedButton, 'Clock in'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      final clock = tester.widget<AttendanceClock>(
+        find.byType(AttendanceClock),
+      );
+      expect(clock.completed, isFalse);
+      expect(clock.elapsed, Duration.zero);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'a failed next-day refresh does not reenable a stale completed session',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final ticks = StreamController<DateTime>();
+      addTearDown(ticks.close);
+      final repo = StubAttendanceRepository()
+        ..result = Right(session(checkout: '2026-11-04T12:00:00'));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            todayAttendanceUsecaseProvider.overrideWithValue(
+              TodayAttendanceUsecase(iAttendanceRepository: repo),
+            ),
+            currentTimeProvider.overrideWith((ref) => ticks.stream),
+          ],
+          child: MaterialApp(
+            theme: buildAppTheme(),
+            home: const Scaffold(body: DashboardHomeView()),
+          ),
+        ),
+      );
+      ticks.add(DateTime(2026, 11, 4, 23, 59));
+      await tester.pumpAndSettle();
+      repo.result = const Left(ServerFailure(message: 'Offline'));
+      ticks.add(DateTime(2026, 11, 5));
+      await tester.pumpAndSettle();
+      expect(find.text("Unable to refresh today's attendance"), findsOneWidget);
+      expect(
+        tester.widget<AttendanceClock>(find.byType(AttendanceClock)).onToggle,
+        isNull,
+      );
+      repo.result = const Right(null);
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<AttendanceClock>(find.byType(AttendanceClock)).onToggle,
+        isNotNull,
+      );
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

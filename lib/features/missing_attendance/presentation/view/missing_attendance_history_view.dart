@@ -1,6 +1,6 @@
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
-import 'package:attendance_flutter/core/common/date_time_utils.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/missing_attendance_history_card_widget.dart';
 import 'package:flutter/material.dart';
 
 class MissingAttendanceHistoryView extends StatelessWidget {
@@ -10,8 +10,12 @@ class MissingAttendanceHistoryView extends StatelessWidget {
     required this.isLoading,
     this.errorMessage,
     this.onRefresh,
+    this.onEdit,
+    this.onDelete,
   });
   final List<MissingAttendanceEntity> requests;
+  final ValueChanged<MissingAttendanceEntity>? onEdit;
+  final ValueChanged<MissingAttendanceEntity>? onDelete;
   final bool isLoading;
   final String? errorMessage;
   final Future<void> Function()? onRefresh;
@@ -22,23 +26,11 @@ class MissingAttendanceHistoryView extends StatelessWidget {
     error: errorMessage,
     onRefresh: onRefresh,
     emptyText: 'No attendance reports yet',
-    itemBuilder: (_, index) => _MissingAttendanceCard(request: requests[index]),
+    itemBuilder: (_, index) => MissingAttendanceHistoryCardWidget(
+      request: requests[index],
+      actionsEnabled: !isLoading,
+      onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
+      onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+    ),
   );
-}
-
-class _MissingAttendanceCard extends StatelessWidget {
-  const _MissingAttendanceCard({required this.request});
-  final MissingAttendanceEntity request;
-  @override
-  Widget build(BuildContext context) {
-    final date = DateTime.tryParse(request.missingDate);
-    return RequestHistoryTile(
-      title: date == null
-          ? request.missingDate
-          : DateTimeUtils.formatDate(date),
-      detail: '${request.requestedCheckIn} - ${request.requestCheckOut}',
-      reason: request.reason,
-      status: request.status,
-    );
-  }
 }

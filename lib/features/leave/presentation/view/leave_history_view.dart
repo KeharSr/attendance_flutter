@@ -10,8 +10,12 @@ class LeaveHistoryView extends StatelessWidget {
     required this.isLoading,
     this.errorMessage,
     this.onRefresh,
+    this.onEdit,
+    this.onDelete,
   });
   final List<LeaveEntity> requests;
+  final ValueChanged<LeaveEntity>? onEdit;
+  final ValueChanged<LeaveEntity>? onDelete;
   final bool isLoading;
   final String? errorMessage;
   final Future<void> Function()? onRefresh;
@@ -22,6 +26,11 @@ class LeaveHistoryView extends StatelessWidget {
     error: errorMessage,
     onRefresh: onRefresh,
     emptyText: 'No leave requests yet',
-    itemBuilder: (_, index) => LeaveHistoryCardWidget(request: requests[index]),
+    itemBuilder: (_, index) => LeaveHistoryCardWidget(
+      request: requests[index],
+      actionsEnabled: !isLoading,
+      onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
+      onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+    ),
   );
 }

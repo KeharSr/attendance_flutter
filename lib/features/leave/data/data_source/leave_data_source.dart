@@ -42,4 +42,27 @@ class LeaveDataSource implements ILeaveDataSource {
 
     return result;
   }
+
+  @override
+  Future<LeaveModel> editLeave({
+    required String leaveRequestId,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String reason,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiEndpoints.editLeave(leaveRequestId),
+      data: {
+        'startDate': DateTimeUtils.dateOnly(startDate),
+        'endDate': DateTimeUtils.dateOnly(endDate),
+        'reason': reason,
+      },
+    );
+    return LeaveModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> deleteLeave({required String leaveRequestId}) async {
+    await _apiClient.delete(ApiEndpoints.deleteLeave(leaveRequestId));
+  }
 }
