@@ -47,6 +47,8 @@ dependencies:
   pretty_dio_logger: ^1.4.0
   flutter_secure_storage: ^11.2.0
   dio_smart_retry: ^7.0.1
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
 
 dev_dependencies:
   flutter_test:

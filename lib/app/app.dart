@@ -6,17 +6,33 @@ import 'package:attendance_flutter/features/dashboard/presentation/view/dashboar
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
+import 'package:attendance_flutter/features/notifications/presentation/widgets/notification_listener.dart';
 
-class App extends ConsumerWidget {
+class App extends ConsumerStatefulWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<App> createState() => _AppState();
+}
+
+class _AppState extends ConsumerState<App> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  @override
+  Widget build(BuildContext context) {
     final startupComplete = ref.watch(splashViewModelProvider);
     final isUserLoggedIn = ref.watch(authSessionProvider);
     final authState = ref.watch(authViewModelProvider);
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
+      scaffoldMessengerKey: _messengerKey,
+      builder: (context, child) => AppNotificationListener(
+        navigatorKey: _navigatorKey,
+        messengerKey: _messengerKey,
+        child: child ?? const SizedBox.shrink(),
+      ),
       debugShowCheckedModeBanner: false,
       title: 'GBN Store HRMS',
       theme: buildAppTheme(),

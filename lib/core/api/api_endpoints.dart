@@ -10,6 +10,9 @@ class ApiEndpoints {
   static const String refreshToken = "$baseUrl/users/refreshToken";
   static const String logout = "$baseUrl/users/logout";
 
+  static const String registerDevice = '$baseUrl/notifications/register';
+  static const String unregisterDevice = '$baseUrl/notifications/unregister';
+
   // =======================attendance routes========================
   static const String clockIn = "$baseUrl/attendance/clockin";
   static const String clockOut = "$baseUrl/attendance/clockout";

@@ -2,6 +2,11 @@
 
 A new Flutter project.
 
+Firebase-only attendance notifications are documented in
+[Firebase notification setup](docs/firebase-notifications.md), including the
+installation-ID API contract, login/logout lifecycle, backend reminder payload,
+and device verification steps.
+
 ## Architecture
 
 The project is organized using feature-based clean architecture:

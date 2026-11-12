@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:attendance_flutter/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/view_model/dashboard_navigation.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/auth/domain/entity/auth_entity.dart';
@@ -99,6 +102,18 @@ class AuthViewModel extends Notifier<AuthState> {
       successMessage: null,
       logoutMessage: null,
     );
+    final notifications = ref.read(notificationViewModelProvider.notifier);
+    final detached = await notifications.prepareLogout();
+    if (!ref.mounted) return;
+    final detachFailure = detached.fold((failure) => failure, (_) => null);
+    if (detachFailure != null) {
+      state = state.copyWith(
+        isLoggingOut: false,
+        errorMessage: detachFailure.message,
+      );
+      unawaited(notifications.activate(requestPermission: false));
+      return;
+    }
     final result = await ref.read(logoutUserUsecaseProvider).call();
     if (!ref.mounted) return;
     result.fold(
@@ -107,6 +122,7 @@ class AuthViewModel extends Notifier<AuthState> {
           isLoggingOut: false,
           errorMessage: failure.message,
         );
+        unawaited(notifications.activate(requestPermission: false));
       },
       (message) {
         state = AuthState.initial().copyWith(logoutMessage: message);
