@@ -9,13 +9,14 @@ part of 'missing_attendance_api_model.dart';
 MissingAttendanceApiModel _$MissingAttendanceApiModelFromJson(
   Map<String, dynamic> json,
 ) => MissingAttendanceApiModel(
-  id: (json['id'] as num).toInt(),
-  userId: (json['user_id'] as num).toInt(),
+  id: json['id'] as String,
+  userId: json['user_id'] as String,
   missingDate: json['missing_date'] as String,
   requestedCheckIn: json['requested_check_in'] as String,
   requestCheckOut: json['request_check_out'] as String,
   reason: json['reason'] as String,
   status: json['status'] as String,
+  rejectReason: json['reject_reason'] as String?,
 );
 
 Map<String, dynamic> _$MissingAttendanceApiModelToJson(
@@ -28,4 +29,5 @@ Map<String, dynamic> _$MissingAttendanceApiModelToJson(
   'request_check_out': instance.requestCheckOut,
   'reason': instance.reason,
   'status': instance.status,
+  'reject_reason': instance.rejectReason,
 };

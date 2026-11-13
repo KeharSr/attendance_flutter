@@ -3,6 +3,8 @@ import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dar
 import 'package:attendance_flutter/features/leave/presentation/widgets/leave_history_card_widget.dart';
 import 'package:flutter/material.dart';
 
+import 'leave_detail_view.dart';
+
 class LeaveHistoryView extends StatelessWidget {
   const LeaveHistoryView({
     super.key,
@@ -26,11 +28,21 @@ class LeaveHistoryView extends StatelessWidget {
     error: errorMessage,
     onRefresh: onRefresh,
     emptyText: 'No leave requests yet',
-    itemBuilder: (_, index) => LeaveHistoryCardWidget(
-      request: requests[index],
-      actionsEnabled: !isLoading,
-      onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
-      onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+    itemBuilder: (context, index) => GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => LeaveDetailView(
+            requestId: requests[index].id,
+            requests: requests,
+          ),
+        ),
+      ),
+      child: LeaveHistoryCardWidget(
+        request: requests[index],
+        actionsEnabled: !isLoading,
+        onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
+        onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+      ),
     ),
   );
 }

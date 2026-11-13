@@ -10,6 +10,7 @@ class LeaveModel {
   final DateTime endDate;
   final String reason;
   final String status;
+  final String? rejectionReason;
 
   const LeaveModel({
     required this.id,
@@ -18,6 +19,7 @@ class LeaveModel {
     required this.endDate,
     required this.reason,
     required this.status,
+    this.rejectionReason,
   });
 
   factory LeaveModel.fromJson(Map<String, dynamic> json) =>
@@ -33,6 +35,7 @@ class LeaveModel {
       endDate: entity.endDate,
       reason: entity.reason,
       status: entity.status,
+      rejectionReason: entity.rejectionReason ?? '',
     );
   }
 
@@ -44,6 +47,7 @@ class LeaveModel {
       endDate: endDate,
       reason: reason,
       status: status,
+      rejectionReason: rejectionReason,
     );
   }
 

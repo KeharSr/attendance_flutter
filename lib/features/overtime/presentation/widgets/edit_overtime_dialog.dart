@@ -17,7 +17,8 @@ class EditOvertimeDialog extends ConsumerStatefulWidget {
 
 class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _hoursController;
+  late final TextEditingController _startTimeController;
+  late final TextEditingController _endTimeController;
   late final TextEditingController _reasonController;
   late DateTime _workDate;
 
@@ -25,15 +26,20 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
   void initState() {
     super.initState();
     _workDate = DateTime.tryParse(widget.request.workDate) ?? DateTime.now();
-    _hoursController = TextEditingController(
-      text: widget.request.overtimeHours.toString(),
+
+    _startTimeController = TextEditingController(
+      text: _initialTime(widget.request.overtimeStartTime),
+    );
+    _endTimeController = TextEditingController(
+      text: _initialTime(widget.request.overtimeEndTime),
     );
     _reasonController = TextEditingController(text: widget.request.reason);
   }
 
   @override
   void dispose() {
-    _hoursController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     _reasonController.dispose();
     super.dispose();
   }
@@ -81,23 +87,44 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              const RequestLabel('Extra hours'),
+              const RequestLabel('Overtime start time'),
               TextFormField(
-                controller: _hoursController,
+                controller: _startTimeController,
+                readOnly: true,
                 enabled: !isLoading,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+                decoration: requestInput(
+                  'Choose start time',
+                  icon: Icons.schedule_rounded,
                 ),
-                decoration: requestInput('e.g. 2.5', suffix: 'hours'),
+                onTap: () => _pickTime(_startTimeController),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Select an overtime start time.'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              const RequestLabel('Overtime end time'),
+              TextFormField(
+                controller: _endTimeController,
+                readOnly: true,
+                enabled: !isLoading,
+                decoration: requestInput(
+                  'Choose end time',
+                  icon: Icons.schedule_rounded,
+                ),
+                onTap: () => _pickTime(_endTimeController),
                 validator: (value) {
-                  final hours = double.tryParse(value?.trim() ?? '');
-                  return hours == null || !hours.isFinite || hours <= 0
-                      ? 'Enter a duration greater than zero.'
-                      : null;
+                  if (value == null || value.isEmpty) {
+                    return 'Select an overtime end time.';
+                  }
+                  if (_startTimeController.text.isNotEmpty &&
+                      value.compareTo(_startTimeController.text) <= 0) {
+                    return 'End time must be later than start time.';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 16),
-              const RequestLabel('Reason for overtime'),
+              const RequestLabel('Reason for overtime', newText: "*"),
               TextFormField(
                 controller: _reasonController,
                 enabled: !isLoading,
@@ -131,14 +158,39 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
     );
   }
 
+  String _initialTime(String? value) {
+    final match = RegExp(r'^(\d{2}):(\d{2})(?::\d{2})?$')
+        .firstMatch(value ?? '');
+    if (match == null) return '';
+    final hour = int.parse(match[1]!);
+    final minute = int.parse(match[2]!);
+    return hour < 24 && minute < 60 ? '${match[1]}:${match[2]}' : '';
+  }
+
+  Future<void> _pickTime(TextEditingController controller) async {
+    final parts = controller.text.split(':');
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: parts.length == 2
+          ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+          : TimeOfDay.now(),
+    );
+    if (selected != null && mounted) {
+      controller.text =
+          '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final hours = double.parse(_hoursController.text.trim());
-    ref.read(overtimeViewModelProvider.notifier).editOvertimeRequest(
-      overtimeId: widget.request.id.toString(),
-      workDate: DateTimeUtils.dateOnly(_workDate),
-      overtimeHours: hours,
-      reason: _reasonController.text.trim(),
-    );
+    ref
+        .read(overtimeViewModelProvider.notifier)
+        .editOvertimeRequest(
+          overtimeId: widget.request.id.toString(),
+          workDate: DateTimeUtils.dateOnly(_workDate),
+          overtimeStartTime: _startTimeController.text,
+          overtimeEndTime: _endTimeController.text,
+          reason: _reasonController.text.trim(),
+        );
   }
 }

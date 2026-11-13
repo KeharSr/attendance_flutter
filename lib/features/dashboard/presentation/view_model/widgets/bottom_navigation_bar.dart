@@ -14,16 +14,24 @@ class CustomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) => DecoratedBox(
     decoration: const BoxDecoration(
       color: Colors.white,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       border: Border(top: BorderSide(color: AppColors.border)),
+      boxShadow: [
+        BoxShadow(
+          color: Color(0x0D1C96C5),
+          blurRadius: 24,
+          offset: Offset(0, -5),
+        ),
+      ],
     ),
     child: NavigationBarTheme(
       data: NavigationBarThemeData(
-        height: 72,
-        backgroundColor: Colors.white,
+        height: 76,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         indicatorColor: AppColors.accentLight,
         indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
@@ -57,23 +65,23 @@ class CustomNavigationBar extends StatelessWidget {
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.schedule_outlined),
-            selectedIcon: Icon(Icons.schedule),
+            icon: Icon(Icons.more_time_rounded),
+            selectedIcon: Icon(Icons.more_time_rounded),
             label: 'Overtime',
           ),
           NavigationDestination(
-            icon: Icon(Icons.date_range_outlined),
-            selectedIcon: Icon(Icons.date_range),
+            icon: Icon(Icons.event_available_outlined),
+            selectedIcon: Icon(Icons.event_available_rounded),
             label: 'Leave',
           ),
           NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
+            icon: Icon(Icons.fact_check_outlined),
+            selectedIcon: Icon(Icons.fact_check_rounded),
             label: 'Missing',
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_circle_outlined),
-            selectedIcon: Icon(Icons.account_circle),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',
           ),
         ],

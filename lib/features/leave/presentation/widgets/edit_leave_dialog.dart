@@ -89,7 +89,7 @@ class _EditLeaveDialogState extends ConsumerState<EditLeaveDialog> {
           },
         ),
         const SizedBox(height: 18),
-        const RequestLabel('Reason'),
+        const RequestLabel('Reason', newText: '*'),
         TextFormField(
           controller: _reasonController,
           enabled: !state.isLoading,

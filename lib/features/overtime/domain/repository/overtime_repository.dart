@@ -5,7 +5,8 @@ import 'package:dartz/dartz.dart';
 abstract interface class IOvertimeRepository {
   Future<Either<Failure, OvertimeEntity>> addOvertime({
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   });
 
@@ -14,7 +15,8 @@ abstract interface class IOvertimeRepository {
   Future<Either<Failure, OvertimeEntity>> editOvertime({
     required String overtimeId,
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   });
 

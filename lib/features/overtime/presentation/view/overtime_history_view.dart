@@ -3,6 +3,8 @@ import 'package:attendance_flutter/features/overtime/domain/entity/overtime_enti
 import 'package:attendance_flutter/features/overtime/presentation/widgets/overtime_history_card_widget.dart';
 import 'package:flutter/material.dart';
 
+import 'overtime_detail_view.dart';
+
 class OvertimeHistoryView extends StatelessWidget {
   const OvertimeHistoryView({
     super.key,
@@ -29,14 +31,21 @@ class OvertimeHistoryView extends StatelessWidget {
       error: errorMessage,
       onRefresh: onRefresh,
       emptyText: 'No overtime requests yet',
-      itemBuilder: (_, index) =>
-          OvertimeHistoryCardWidget(
-            request: sorted[index],
-            onEdit: onEdit == null ? null : () => onEdit!(sorted[index]),
-            onDelete: onDelete == null
-                ? null
-                : () => onDelete!(sorted[index]),
+      itemBuilder: (context, index) => GestureDetector(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => OvertimeDetailView(
+              requestId: sorted[index].id,
+              requests: sorted,
+            ),
           ),
+        ),
+        child: OvertimeHistoryCardWidget(
+          request: sorted[index],
+          onEdit: onEdit == null ? null : () => onEdit!(sorted[index]),
+          onDelete: onDelete == null ? null : () => onDelete!(sorted[index]),
+        ),
+      ),
     );
   }
 }

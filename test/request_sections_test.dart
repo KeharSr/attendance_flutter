@@ -27,6 +27,46 @@ class _Missing extends MissingAttendanceViewModel {
 }
 
 void main() {
+  testWidgets(
+    'missing attendance calendar ends today and rejects future text input',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            missingAttendanceViewModelProvider.overrideWith(_Missing.new),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: MissingAttendanceView()),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(TextFormField).first);
+      await tester.pumpAndSettle();
+      final today = DateUtils.dateOnly(DateTime.now());
+      final picker = tester.widget<DatePickerDialog>(
+        find.byType(DatePickerDialog),
+      );
+      expect(picker.lastDate, today);
+      expect(picker.firstDate.isAfter(today), isFalse);
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      final future = today.add(const Duration(days: 1));
+      final field = find.descendant(
+        of: find.byType(DatePickerDialog),
+        matching: find.byType(TextFormField),
+      );
+      await tester.enterText(
+        field,
+        '${future.month}/${future.day}/${future.year}',
+      );
+      await tester.tap(find.text('Select'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      expect(find.text('Out of range.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('leave and missing history tabs trigger their providers', (
     tester,
   ) async {

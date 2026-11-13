@@ -55,7 +55,7 @@ class AttendanceClock extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -73,7 +73,7 @@ class AttendanceClock extends StatelessWidget {
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (context, constraints) {
-              final diameter = math.min(244.0, constraints.maxWidth);
+              final diameter = math.min(200.0, constraints.maxWidth);
               return Semantics(
                 value: '${(progress * 100).round()}% of the workday',
                 label:
@@ -233,7 +233,16 @@ class AttendanceDialPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, paint..color = AppColors.border);
     if (progress > 0) {
-      paint.color = _green;
+      paint.shader = const SweepGradient(
+        colors: [
+          AppColors.sky,
+          AppColors.blue,
+          AppColors.blueDeep,
+          AppColors.sky,
+        ],
+        startAngle: -math.pi / 2,
+        endAngle: math.pi * 1.5,
+      ).createShader(ring);
       if (progress == 1) {
         canvas.drawCircle(center, radius, paint);
       } else {

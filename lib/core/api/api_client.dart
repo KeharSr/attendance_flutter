@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/navigator/global_navigator.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
@@ -386,6 +387,7 @@ class _AuthInterceptor extends Interceptor {
       final token = await _storage.getAccessToken();
       if (token == null) {
         handler.next(error);
+        navigateToLogin();
         return;
       }
       final response = await _dio.fetch<dynamic>(
@@ -399,7 +401,6 @@ class _AuthInterceptor extends Interceptor {
       );
       handler.resolve(response);
     } on DioException catch (retryError) {
-      // Transient refresh errors keep saved credentials for a later retry.
       handler.reject(retryError);
     } catch (failure, stack) {
       handler.reject(

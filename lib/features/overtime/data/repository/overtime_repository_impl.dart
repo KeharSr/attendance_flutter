@@ -12,13 +12,15 @@ class OvertimeRepositoryImpl implements IOvertimeRepository {
   @override
   Future<Either<Failure, OvertimeEntity>> addOvertime({
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     try {
       final result = await _overtimeDataSource.addOvertime(
         workDate: workDate,
-        overtimeHours: overtimeHours,
+        overtimeStartTime: overtimeStartTime,
+        overtimeEndTime: overtimeEndTime,
         reason: reason,
       );
       return Right(result.toEntity());
@@ -42,14 +44,16 @@ class OvertimeRepositoryImpl implements IOvertimeRepository {
   Future<Either<Failure, OvertimeEntity>> editOvertime({
     required String overtimeId,
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     try {
       final result = await _overtimeDataSource.editOvertime(
         overtimeId: overtimeId,
         workDate: workDate,
-        overtimeHours: overtimeHours,
+        overtimeStartTime: overtimeStartTime,
+        overtimeEndTime: overtimeEndTime,
         reason: reason,
       );
       return Right(result.toEntity());

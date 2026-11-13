@@ -2,6 +2,7 @@ import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:attendance_flutter/core/common/request_detail_ui.dart';
 
 class OvertimeHistoryCardWidget extends StatelessWidget {
   const OvertimeHistoryCardWidget({
@@ -16,12 +17,28 @@ class OvertimeHistoryCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(request.workDate);
-    final hours = request.overtimeHours
-        .toStringAsFixed(2)
-        .replaceFirst(RegExp(r'\.?0+$'), '');
     return RequestHistoryTile(
-      title: date == null ? request.workDate : DateTimeUtils.formatDate(date),
-      detail: '$hours hours',
+      typeLabel: 'Overtime request',
+      icon: Icons.more_time_rounded,
+      title: request.workDate.isEmpty
+          ? 'Overtime request #${request.id}'
+          : date == null
+          ? request.workDate
+          : DateTimeUtils.formatDate(date),
+      detail:
+          'Work date ${date == null ? request.workDate : DateTimeUtils.formatDate(date)}',
+      startValue: requestDisplayTime(
+        request.overtimeStartTime,
+        fallback: 'Not provided',
+      ),
+      endValue: requestDisplayTime(
+        request.overtimeEndTime,
+        fallback: 'Not provided',
+      ),
+      durationLabel: requestDisplayDuration(
+        request.overtimeStartTime,
+        request.overtimeEndTime,
+      ),
       reason: request.reason,
       status: request.status,
       onEdit: onEdit,

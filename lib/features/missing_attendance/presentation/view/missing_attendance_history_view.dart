@@ -3,6 +3,8 @@ import 'package:attendance_flutter/features/missing_attendance/domain/entity/mis
 import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/missing_attendance_history_card_widget.dart';
 import 'package:flutter/material.dart';
 
+import 'missing_attendance_detail_view.dart';
+
 class MissingAttendanceHistoryView extends StatelessWidget {
   const MissingAttendanceHistoryView({
     super.key,
@@ -26,11 +28,21 @@ class MissingAttendanceHistoryView extends StatelessWidget {
     error: errorMessage,
     onRefresh: onRefresh,
     emptyText: 'No attendance reports yet',
-    itemBuilder: (_, index) => MissingAttendanceHistoryCardWidget(
-      request: requests[index],
-      actionsEnabled: !isLoading,
-      onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
-      onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+    itemBuilder: (context, index) => GestureDetector(
+      child: MissingAttendanceHistoryCardWidget(
+        request: requests[index],
+        actionsEnabled: !isLoading,
+        onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
+        onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+      ),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => MissingAttendanceDetailView(
+            requestId: requests[index].id,
+            requests: requests,
+          ),
+        ),
+      ),
     ),
   );
 }

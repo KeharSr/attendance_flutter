@@ -18,8 +18,14 @@ class LeaveHistoryCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RequestHistoryTile(
+      typeLabel: 'Leave request',
+      icon: Icons.event_available_outlined,
       title: DateTimeUtils.formatDate(request.startDate),
-      detail: 'Through ${DateTimeUtils.formatDate(request.endDate)}',
+      detail: 'Leave request',
+      startLabel: 'From',
+      endLabel: 'To',
+      startValue: DateTimeUtils.formatDate(request.startDate),
+      endValue: DateTimeUtils.formatDate(request.endDate),
       reason: request.reason,
       status: request.status,
       onEdit: onEdit,

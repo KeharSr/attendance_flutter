@@ -1,4 +1,5 @@
 import 'package:attendance_flutter/core/common/app_top_bar.dart';
+import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/app_page_background.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_home_view.dart';
@@ -43,7 +44,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   Widget build(BuildContext context) {
     final tab = ref.watch(dashboardNavigationProvider);
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: AppColors.background,
       appBar: AppTopBar(
         title: _titles[tab.index],
         actions: [
@@ -57,8 +58,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       : DashboardTab.profile,
                 ),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF5F6F8),
-              foregroundColor: const Color(0xFF344054),
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.accent,
             ),
             icon: Icon(
               tab == DashboardTab.profile

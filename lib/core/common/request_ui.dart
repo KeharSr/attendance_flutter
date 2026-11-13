@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 
@@ -7,19 +8,13 @@ const requestMuted = AppColors.muted;
 const requestAccent = AppColors.accent;
 
 const _surface = Colors.white;
-const _subtle = Color(0xFFF8FAFC); // soft panel background
-const _hairline = Color(0xFFE4E7EC);
-const _warning = Color(0xFFB54708);
-
-const _cardShadow = [
-  BoxShadow(color: Color(0x0F101828), blurRadius: 12, offset: Offset(0, 4)),
-  BoxShadow(color: Color(0x0A101828), blurRadius: 2, offset: Offset(0, 1)),
-];
+const _subtle = Color(0xFFF5FAFD); // soft panel background
+const _hairline = AppColors.border;
 
 InputDecoration requestInput(String hint, {IconData? icon, String? suffix}) {
   OutlineInputBorder border(Color color, [double width = 1]) =>
       OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: color, width: width),
       );
   return InputDecoration(
@@ -41,17 +36,29 @@ InputDecoration requestInput(String hint, {IconData? icon, String? suffix}) {
 }
 
 class RequestLabel extends StatelessWidget {
-  const RequestLabel(this.label, {super.key});
+  const RequestLabel(this.label, {this.newText, super.key});
   final String label;
+  final String? newText;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: requestInk,
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
+    child: Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: label,
+            style: const TextStyle(
+              color: requestInk,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (newText != null)
+            TextSpan(
+              text: ' $newText',
+              style: const TextStyle(color: Colors.red),
+            ),
+        ],
       ),
     ),
   );
@@ -78,7 +85,7 @@ class RequestSubmitButton extends StatelessWidget {
         foregroundColor: Colors.white,
         disabledBackgroundColor: requestAccent.withValues(alpha: .6),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: Theme.of(context).textTheme.labelLarge
             ?.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
       ),
@@ -137,7 +144,7 @@ class _RequestTabsState extends State<RequestTabs>
               height: 46,
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF1F5),
+                color: AppColors.skyPale,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TabBar(
@@ -197,12 +204,18 @@ class RequestFormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: _surface,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.border),
-      boxShadow: _cardShadow,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFEDF0F5)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x0D1A2942),
+          blurRadius: 24,
+          offset: Offset(0, 8),
+        ),
+      ],
     ),
     child: Form(key: formKey, child: child),
   );
@@ -270,234 +283,290 @@ class RequestHistoryTile extends StatelessWidget {
     required this.detail,
     required this.reason,
     required this.status,
+    this.typeLabel = 'Request',
+    this.onView,
     this.onEdit,
     this.onDelete,
     this.actionsEnabled = true,
     this.icon,
     this.footer,
+    this.startLabel = 'Start',
+    this.endLabel = 'End',
+    this.startValue,
+    this.endValue,
+    this.durationLabel,
     super.key,
   });
-  final String title;
-  final String detail;
-  final String reason;
-  final String status;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final String title, detail, reason, status, typeLabel, startLabel, endLabel;
+  final String? startValue, endValue, durationLabel, footer;
+  final VoidCallback? onView, onEdit, onDelete;
   final bool actionsEnabled;
-
   final IconData? icon;
 
-  final String? footer;
+  Widget _value(String label, String value, Color color) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: .8,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        value,
+        style: const TextStyle(
+          color: Color(0xFF102C4F),
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+        ),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
     final normalized = status.trim().toLowerCase();
-    final color = switch (normalized) {
-      'approved' => AppColors.success,
-      'rejected' => AppColors.danger,
-      'pending' => _warning,
-      _ => requestMuted,
-    };
-    final statusIcon = switch (normalized) {
-      'approved' => Icons.check_circle_rounded,
-      'rejected' => Icons.cancel_rounded,
-      'pending' => Icons.schedule_rounded,
-      _ => Icons.help_rounded,
-    };
-    final statusLabel = normalized.isEmpty
-        ? 'Unknown'
-        : normalized[0].toUpperCase() + normalized.substring(1);
     final canAct =
         normalized == 'pending' && (onEdit != null || onDelete != null);
-
+    final color = switch (normalized) {
+      'approved' => const Color(0xFF007D83),
+      'rejected' => const Color(0xFFCC3E24),
+      'pending' => const Color(0xFF9A5B00),
+      _ => requestMuted,
+    };
+    final badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: switch (normalized) {
+          'approved' => const Color(0xFFE0F2EF),
+          'rejected' => const Color(0xFFFBE5DE),
+          'pending' => const Color(0xFFFFF0D0),
+          _ => const Color(0xFFF0F2F6),
+        },
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        normalized.isEmpty
+            ? 'Unknown'
+            : '${normalized[0].toUpperCase()}${normalized.substring(1)}',
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
     return Container(
       decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
-        boxShadow: _cardShadow,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x081D3557),
+            blurRadius: 16,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Keep the status beside the date when space permits, and wrap
-                // it below the date on narrow screens or at large text sizes.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 42,
-                      width: 42,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: .1),
-                        borderRadius: BorderRadius.circular(12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final heading = Text(
+                      reason.trim().isEmpty ? typeLabel : reason,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF102C4F),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
                       ),
-                      child: Icon(
-                        icon ?? Icons.description_outlined,
-                        color: color,
-                        size: 21,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                    );
+                    if (MediaQuery.textScalerOf(context).scale(13) > 19 ||
+                        constraints.maxWidth < 230) {
+                      return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  color: requestInk,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.3,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.fromLTRB(7, 4, 10, 4),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: .1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(statusIcon, size: 14, color: color),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        statusLabel,
-                                        style: TextStyle(
-                                          color: color,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            detail,
-                            style: const TextStyle(
-                              color: requestMuted,
-                              fontSize: 13,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                // Reason panel
-                if (reason.trim().isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _subtle,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _hairline),
-                    ),
-                    child: Column(
+                        children: [heading, const SizedBox(height: 6), badge],
+                      );
+                    }
+                    return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Reason',
-                          style: TextStyle(
-                            color: requestMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          reason,
-                          style: const TextStyle(
-                            color: requestInk,
-                            fontSize: 13.5,
-                            height: 1.5,
-                          ),
-                        ),
+                        Expanded(child: heading),
+                        const SizedBox(width: 8),
+                        badge,
                       ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  style: const TextStyle(
+                    color: Color(0xFF52668D),
+                    fontSize: 10,
+                    height: 1.4,
+                  ),
+                ),
+                if (startValue != null && endValue != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F8FC),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final start = _value(
+                          startLabel,
+                          startValue!,
+                          const Color(0xFF007D83),
+                        );
+                        final end = _value(
+                          endLabel,
+                          endValue!,
+                          const Color(0xFFCB402A),
+                        );
+                        final duration = durationLabel == null
+                            ? null
+                            : Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.skyPale,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  durationLabel!,
+                                  style: const TextStyle(
+                                    color: AppColors.accent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              );
+                        if (constraints.maxWidth < 250 ||
+                            MediaQuery.textScalerOf(context).scale(14) > 20) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Wrap(
+                                spacing: 18,
+                                runSpacing: 12,
+                                children: [start, end],
+                              ),
+                              if (duration != null) ...[
+                                const SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: duration,
+                                ),
+                              ],
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Flexible(child: start),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    child: Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Color(0xFF7A88A4),
+                                      size: 14,
+                                    ),
+                                  ),
+                                  Flexible(child: end),
+                                ],
+                              ),
+                            ),
+                            if (duration != null) ...[
+                              const SizedBox(width: 8),
+                              duration,
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],
                 if (footer != null) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time_rounded,
-                        size: 14,
-                        color: Color(0xFF98A2B3),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          footer!,
-                          style: const TextStyle(
-                            color: Color(0xFF98A2B3),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8),
+                  Text(
+                    footer!,
+                    style: const TextStyle(color: requestMuted, fontSize: 11),
                   ),
                 ],
               ],
             ),
           ),
-          if (canAct) ...[
-            const Divider(height: 1, color: _hairline),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 4,
-                runSpacing: 4,
+          if (canAct || onView != null) ...[
+            const Divider(height: 1, color: Color(0xFFF0F1F7)),
+            IntrinsicHeight(
+              child: Row(
                 children: [
-                  if (onDelete != null)
-                    TextButton.icon(
-                      onPressed: actionsEnabled ? onDelete : null,
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.danger,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  if (onView != null)
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: onView,
+                        icon: const Icon(Icons.visibility_outlined, size: 14),
+                        label: const Text('View'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.accent,
                         ),
                       ),
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                      label: const Text('Delete'),
                     ),
-                  if (onEdit != null) ...[
-                    const SizedBox(width: 4),
-                    TextButton.icon(
-                      onPressed: actionsEnabled ? onEdit : null,
-                      style: TextButton.styleFrom(
-                        foregroundColor: requestAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                  if (canAct && onEdit != null)
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: actionsEnabled ? onEdit : null,
+                        icon: const Icon(Icons.edit_outlined, size: 14),
+                        label: const Text('Edit'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.accent,
                         ),
                       ),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('Edit'),
                     ),
-                  ],
+                  if (canAct && onEdit != null && onDelete != null)
+                    const VerticalDivider(width: 1, color: Color(0xFFF0F1F7)),
+                  if (canAct && onDelete != null)
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: actionsEnabled ? onDelete : null,
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 14,
+                        ),
+                        label: const Text('Delete'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFD42621),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -547,13 +616,26 @@ class RequestHistoryList extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        '$count ${count == 1 ? 'request' : 'requests'}',
-                        style: const TextStyle(
-                          color: requestMuted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Request history',
+                            style: const TextStyle(
+                              color: requestInk,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$count ${count == 1 ? 'request' : 'requests'}',
+                            style: const TextStyle(
+                              color: requestMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (onRefresh != null)
@@ -681,12 +763,6 @@ class RequestHistoryList extends StatelessWidget {
         );
       },
     );
-    return onRefresh == null
-        ? list
-        : RefreshIndicator(
-            onRefresh: onRefresh!,
-            color: requestAccent,
-            child: list,
-          );
+    return list;
   }
 }

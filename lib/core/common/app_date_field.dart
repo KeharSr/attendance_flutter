@@ -18,7 +18,7 @@ class AppDateField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      RequestLabel(label),
+      RequestLabel(label, ),
       TextFormField(
         key: ValueKey('$label-${date?.toIso8601String()}'),
         readOnly: true,

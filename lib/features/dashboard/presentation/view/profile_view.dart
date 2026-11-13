@@ -163,7 +163,7 @@ class _ProfileCard extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(22),
       border: Border.all(color: AppColors.border),
     ),
     child: child,
@@ -183,7 +183,7 @@ class _ProfileDetail extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Icon(icon, size: 21, color: AppColors.muted),
+      Icon(icon, size: 21, color: AppColors.accent),
       const SizedBox(width: 14),
       Expanded(
         child: Column(

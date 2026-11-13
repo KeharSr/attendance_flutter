@@ -129,7 +129,7 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const RequestLabel('Reason'),
+                const RequestLabel('Reason', newText: '*'),
                 TextFormField(
                   controller: _reasonController,
                   enabled: !state.isLoading,

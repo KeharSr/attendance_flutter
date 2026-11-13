@@ -1,10 +1,11 @@
+import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const _teal = Color(0xFF006B7A);
+const _teal = AppColors.accent;
 const _ink = Color(0xFF182230);
 const _muted = Color(0xFF667085);
 
@@ -42,7 +43,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     });
     final state = ref.watch(authViewModelProvider);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -69,7 +70,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(color: const Color(0xFFE4E7EC)),
                     ),
                     child: Form(
@@ -189,7 +190,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   elevation: 0,
                                   shadowColor: const Color(0x33008399),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   textStyle: Theme.of(context)
                                       .textTheme
@@ -260,7 +261,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   InputDecoration _fieldDecoration(String hint) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(14),
       borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
     );
     return InputDecoration(

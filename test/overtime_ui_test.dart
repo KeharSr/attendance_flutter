@@ -4,12 +4,43 @@ import 'package:attendance_flutter/features/overtime/presentation/view/overtime_
 import 'package:attendance_flutter/features/overtime/presentation/view/overtime_history_view.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/view_model/overtime_view_model.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/state/overtime_state.dart';
+import 'package:attendance_flutter/features/overtime/presentation/widgets/edit_overtime_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class FakeOvertime extends OvertimeViewModel {
   int fetches = 0;
+  String? submittedWorkDate;
+  String? startTime;
+  String? endTime;
+  @override
+  Future<void> createOvertimeRequest({
+    required String workDate,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
+    required String reason,
+  }) async {
+    submittedWorkDate = workDate;
+    startTime = overtimeStartTime;
+    endTime = overtimeEndTime;
+  }
+
+  String? editedId;
+  @override
+  Future<void> editOvertimeRequest({
+    required String overtimeId,
+    required String workDate,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
+    required String reason,
+  }) async {
+    editedId = overtimeId;
+    submittedWorkDate = workDate;
+    startTime = overtimeStartTime;
+    endTime = overtimeEndTime;
+  }
+
   @override
   OvertimeState build() => OvertimeState.initial();
   @override
@@ -36,14 +67,15 @@ void main() {
     expect(find.text('No overtime requests yet'), findsOneWidget);
   });
 
-  testWidgets('request validates invalid duration inline', (tester) async {
+  testWidgets('request requires a work date and both overtime times', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [overtimeViewModelProvider.overrideWith(FakeOvertime.new)],
         child: const MaterialApp(home: Scaffold(body: OvertimeView())),
       ),
     );
-    await tester.enterText(find.byType(TextFormField).at(1), 'NaN');
     final scrollable = tester.state<ScrollableState>(
       find
           .descendant(
@@ -56,9 +88,103 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Submit request'));
     await tester.pumpAndSettle();
-    expect(find.text('Enter a duration greater than zero.'), findsOneWidget);
     expect(find.text('Select a work date.'), findsOneWidget);
+    expect(find.text('Select an overtime start time.'), findsOneWidget);
+    expect(find.text('Select an overtime end time.'), findsOneWidget);
   });
+
+  testWidgets(
+    'time requests validate the range and submit the date and times',
+    (tester) async {
+      final fake = FakeOvertime();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [overtimeViewModelProvider.overrideWith(() => fake)],
+          child: const MaterialApp(home: Scaffold(body: OvertimeView())),
+        ),
+      );
+      fake.setWorkDate(DateTime(2026, 11, 1));
+      await tester.pumpAndSettle();
+      final fields = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      expect(fields.length, 4);
+      final inputs = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      expect(inputs[0].readOnly, isTrue);
+      expect(inputs[1].readOnly, isTrue);
+      fields[1].controller!.text = '18:00';
+      fields[2].controller!.text = '17:00';
+      fields[3].controller!.text = 'Complete inventory review';
+      await tester.ensureVisible(find.text('Submit request'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Submit request'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('End time must be later than start time.'),
+        findsOneWidget,
+      );
+      expect(fake.startTime, isNull);
+      fields[2].controller!.text = '20:30';
+      await tester.ensureVisible(find.text('Submit request'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Submit request'));
+      await tester.pumpAndSettle();
+      expect(fake.submittedWorkDate, '2026-11-01');
+      expect(fake.startTime, '18:00');
+      expect(fake.endTime, '20:30');
+    },
+  );
+
+  testWidgets(
+    'edit prefills times, validates the range and saves date and times',
+    (tester) async {
+      final fake = FakeOvertime();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [overtimeViewModelProvider.overrideWith(() => fake)],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: EditOvertimeDialog(
+                request: OvertimeEntity(
+                  id: 7,
+                  userId: 1,
+                  workDate: '2026-11-01',
+                  overtimeStartTime: '18:00:00',
+                  overtimeEndTime: '20:30:00',
+                  reason: 'Complete inventory review',
+                  status: 'pending',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final fields = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      expect(fields.length, 4);
+      expect(fields[0].initialValue, 'Nov 1, 2026');
+      expect(fields[1].controller!.text, '18:00');
+      expect(fields[2].controller!.text, '20:30');
+      fields[2].controller!.text = '17:00';
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('End time must be later than start time.'),
+        findsOneWidget,
+      );
+      expect(fake.editedId, isNull);
+      fields[2].controller!.text = '21:15';
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+      expect(fake.editedId, '7');
+      expect(fake.submittedWorkDate, '2026-11-01');
+      expect(fake.startTime, '18:00');
+      expect(fake.endTime, '21:15');
+    },
+  );
 
   testWidgets('history accommodates long reasons and enlarged text', (
     tester,
@@ -82,7 +208,8 @@ void main() {
                   id: 1,
                   userId: 1,
                   workDate: '2026-11-01',
-                  overtimeHours: 2.5,
+                  overtimeStartTime: '18:00:00',
+                  overtimeEndTime: '20:30:00',
                   reason: 'Completed the inventory review and prepared the monthly report for the team.',
                   status: 'approved',
                 ),

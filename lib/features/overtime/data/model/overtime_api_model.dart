@@ -4,20 +4,24 @@ part 'overtime_api_model.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class OvertimeApiModel {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
+  final String? overtimeStartTime;
+  final String? overtimeEndTime;
   final String workDate;
-  final double overtimeHours;
   final String reason;
   final String status;
+  final String? rejectReason;
 
   OvertimeApiModel({
     required this.id,
     required this.userId,
-    required this.workDate,
-    required this.overtimeHours,
+    this.overtimeStartTime,
+    this.overtimeEndTime,
+    this.workDate = '',
     required this.reason,
     required this.status,
+    this.rejectReason,
   });
 
   factory OvertimeApiModel.fromJson(Map<String, dynamic> json) =>
@@ -30,10 +34,12 @@ class OvertimeApiModel {
     return OvertimeApiModel(
       id: entity.id,
       userId: entity.userId,
+      overtimeStartTime: entity.overtimeStartTime,
+      overtimeEndTime: entity.overtimeEndTime,
       workDate: entity.workDate,
-      overtimeHours: entity.overtimeHours,
       reason: entity.reason,
       status: entity.status,
+      rejectReason: entity.rejectReason ?? '',
     );
   }
 
@@ -42,10 +48,12 @@ class OvertimeApiModel {
     return OvertimeEntity(
       id: id,
       userId: userId,
+      overtimeStartTime: overtimeStartTime,
+      overtimeEndTime: overtimeEndTime,
       workDate: workDate,
-      overtimeHours: overtimeHours,
       reason: reason,
       status: status,
+      rejectReason: rejectReason,
     );
   }
 

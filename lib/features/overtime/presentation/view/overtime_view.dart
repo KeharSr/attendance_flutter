@@ -1,7 +1,7 @@
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
-import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
+import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view/overtime_history_view.dart';
 import 'package:attendance_flutter/features/overtime/presentation/widgets/edit_overtime_dialog.dart';
@@ -19,12 +19,14 @@ class OvertimeView extends ConsumerStatefulWidget {
 
 class _OvertimeViewState extends ConsumerState<OvertimeView> {
   final _formKey = GlobalKey<FormState>();
-  final _hoursController = TextEditingController();
+  final _startTimeController = TextEditingController();
+  final _endTimeController = TextEditingController();
   final _reasonController = TextEditingController();
 
   @override
   void dispose() {
-    _hoursController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     _reasonController.dispose();
     super.dispose();
   }
@@ -38,7 +40,8 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
         AppSnackBar.success(context, next.successMessage!);
         if (next.successMessage == 'Overtime request submitted for review.') {
           _formKey.currentState?.reset();
-          _hoursController.clear();
+          _startTimeController.clear();
+          _endTimeController.clear();
           _reasonController.clear();
           ref.read(overtimeViewModelProvider.notifier).clearWorkDate();
         }
@@ -58,7 +61,8 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
       request: _RequestForm(
         state: overtimeState,
         formKey: _formKey,
-        hoursController: _hoursController,
+        startTimeController: _startTimeController,
+        endTimeController: _endTimeController,
         reasonController: _reasonController,
         onSubmit: _submit,
       ),
@@ -114,21 +118,14 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
   void _submit() {
     if (ref.read(overtimeViewModelProvider).isLoading) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final state = ref.read(overtimeViewModelProvider);
-    if (state.workDate == null) {
-      AppSnackBar.error(context, 'Select a work date.');
-      return;
-    }
-    final hours = double.tryParse(_hoursController.text.trim());
-    if (hours == null || !hours.isFinite || hours <= 0) {
-      AppSnackBar.error(context, 'Enter a valid overtime duration.');
-      return;
-    }
     ref
         .read(overtimeViewModelProvider.notifier)
         .createOvertimeRequest(
-          workDate: DateTimeUtils.dateOnly(state.workDate!),
-          overtimeHours: hours,
+          workDate: DateTimeUtils.dateOnly(
+            ref.read(overtimeViewModelProvider).workDate!,
+          ),
+          overtimeStartTime: _startTimeController.text,
+          overtimeEndTime: _endTimeController.text,
           reason: _reasonController.text.trim(),
         );
   }
@@ -138,16 +135,36 @@ class _RequestForm extends ConsumerWidget {
   const _RequestForm({
     required this.state,
     required this.formKey,
-    required this.hoursController,
+    required this.startTimeController,
+    required this.endTimeController,
     required this.reasonController,
     required this.onSubmit,
   });
 
   final OvertimeState state;
   final GlobalKey<FormState> formKey;
-  final TextEditingController hoursController;
+  final TextEditingController startTimeController;
+  final TextEditingController endTimeController;
   final TextEditingController reasonController;
   final VoidCallback onSubmit;
+
+  Future<void> _pickTime(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    final parts = controller.text.split(':');
+    final initial = parts.length == 2
+        ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+        : TimeOfDay.now();
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (selected != null && context.mounted) {
+      controller.text =
+          '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,24 +189,17 @@ class _RequestForm extends ConsumerWidget {
                 initialValue: state.workDate == null
                     ? ''
                     : DateTimeUtils.formatDate(state.workDate!),
-                style: const TextStyle(color: requestInk, fontSize: 14),
-                decoration:
-                    requestInput(
-                      'Choose a date',
-                      icon: Icons.calendar_today_outlined,
-                    ).copyWith(
-                      suffixIcon: const Icon(
-                        Icons.expand_more_rounded,
-                        color: requestMuted,
-                        size: 20,
-                      ),
-                    ),
+                decoration: requestInput(
+                  'Choose a date',
+                  icon: Icons.calendar_today_outlined,
+                ),
                 validator: (_) =>
                     state.workDate == null ? 'Select a work date.' : null,
                 onTap: () async {
                   final date = await showAppDatePicker(
                     context,
                     selectedDate: state.workDate,
+                    lastDate: DateTime.now(),
                     helpText: 'Select work date',
                   );
                   if (date != null && context.mounted) {
@@ -200,30 +210,45 @@ class _RequestForm extends ConsumerWidget {
                 },
               ),
               const SizedBox(height: 22),
-              const RequestLabel('Extra hours'),
+              const RequestLabel('Overtime start time'),
               TextFormField(
-                controller: hoursController,
+                controller: startTimeController,
+                readOnly: true,
                 enabled: !state.isLoading,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                textInputAction: TextInputAction.next,
-                style: const TextStyle(color: requestInk, fontSize: 14),
                 decoration: requestInput(
-                  'e.g. 2.5',
+                  'Choose start time',
                   icon: Icons.schedule_rounded,
-                  suffix: 'hours',
                 ),
+                onTap: () => _pickTime(context, startTimeController),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Select an overtime start time.'
+                    : null,
+              ),
+              const SizedBox(height: 22),
+              const RequestLabel('Overtime end time'),
+              TextFormField(
+                controller: endTimeController,
+                readOnly: true,
+                enabled: !state.isLoading,
+                decoration: requestInput(
+                  'Choose end time',
+                  icon: Icons.schedule_rounded,
+                ),
+                onTap: () => _pickTime(context, endTimeController),
                 validator: (value) {
-                  final hours = double.tryParse(value?.trim() ?? '');
-                  return hours == null || !hours.isFinite || hours <= 0
-                      ? 'Enter a duration greater than zero.'
-                      : null;
+                  if (value == null || value.isEmpty) {
+                    return 'Select an overtime end time.';
+                  }
+                  if (startTimeController.text.isNotEmpty &&
+                      value.compareTo(startTimeController.text) <= 0) {
+                    return 'End time must be later than start time.';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 8),
               const Text(
-                'Use decimals for partial hours: 1.5 = 1 hr 30 min.',
+                'Choose the start and end time for the same day.',
                 style: TextStyle(
                   color: requestMuted,
                   fontSize: 12,
@@ -231,7 +256,7 @@ class _RequestForm extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 22),
-              const RequestLabel('Reason for overtime'),
+              const RequestLabel('Reason for overtime', newText: "*"),
               TextFormField(
                 controller: reasonController,
                 enabled: !state.isLoading,

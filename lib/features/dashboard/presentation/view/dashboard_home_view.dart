@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/widgets/attendance_clock.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
@@ -103,159 +104,237 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
         constraints: const BoxConstraints(maxWidth: 720),
         child: RefreshIndicator(
           onRefresh: _refresh,
-          child: ListView(
+          child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-            children: [
-              Text(
-                DateTimeUtils.formatDate(now),
-                style: const TextStyle(
-                  color: _muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                name == null || name.isEmpty
-                    ? '$greeting.'
-                    : '$greeting, ${name.split(' ').first}.',
-                style: const TextStyle(
-                  color: _ink,
-                  fontSize: 24,
-                  height: 1.25,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -.9,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'View your attendance and manage requests.',
-                style: TextStyle(color: _muted, fontSize: 13),
-              ),
-              const SizedBox(height: 26),
-              if (attendance.todayErrorMessage != null) ...[
-                _Surface(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.blue,
+                        AppColors.blueDeep,
+                        AppColors.accent,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x2420A7DB),
+                        blurRadius: 20,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Unable to refresh today's attendance",
-                        style: TextStyle(
-                          color: _ink,
-                          fontSize: 14,
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.wb_sunny_outlined,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              DateTimeUtils.formatDate(now),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        name == null || name.isEmpty
+                            ? '$greeting.'
+                            : '$greeting, ${name.split(' ').first}.',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          height: 1.3,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: -.7,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        attendance.todayErrorMessage!,
-                        style: const TextStyle(color: _muted, fontSize: 13),
-                      ),
-                      TextButton(
-                        onPressed: attendance.isFetchingToday ? null : _refresh,
-                        child: const Text('Try again'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Your workday, all in one place.',
+                        style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 22),
+                if (attendance.todayErrorMessage != null) ...[
+                  _Surface(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Unable to refresh today's attendance",
+                          style: TextStyle(
+                            color: _ink,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          attendance.todayErrorMessage!,
+                          style: const TextStyle(color: _muted, fontSize: 13),
+                        ),
+                        TextButton(
+                          onPressed: attendance.isFetchingToday
+                              ? null
+                              : _refresh,
+                          child: const Text('Try again'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                const _SectionTitle(
+                  "Today's attendance",
+                  subtitle: 'Track your time at work',
+                ),
+                const SizedBox(height: 12),
+                AttendanceClock(
+                  now: now,
+                  working: working,
+                  completed: completedToday,
+                  loading: attendance.isLoading || attendance.isFetchingToday,
+                  loadingMessage: attendance.isFetchingToday
+                      ? "Loading today's attendance..."
+                      : 'Verifying location...',
+                  elapsed: elapsed,
+                  checkIn: start,
+                  onToggle:
+                      !attendance.hasLoadedToday ||
+                          completedToday ||
+                          (record != null && !isToday)
+                      ? null
+                      : () {
+                          final notifier = ref.read(
+                            attendanceViewModelProvider.notifier,
+                          );
+                          if (working) {
+                            notifier.clockOutAttendance();
+                          } else {
+                            notifier.clockInAttendance();
+                          }
+                        },
+                ),
+                const SizedBox(height: 24),
+                const _SectionTitle(
+                  'Attendance summary',
+                  subtitle: 'Your latest recorded session',
+                ),
+                const SizedBox(height: 12),
+                _Surface(
+                  child: Column(
+                    children: [
+                      _SessionRow(
+                        icon: Icons.login_rounded,
+                        label: 'Clock in',
+                        value: start == null
+                            ? 'Not recorded'
+                            : DateTimeUtils.formatTime(start),
+                        date: start,
+                      ),
+                      const Divider(height: 25, color: Color(0xFFF0F3F7)),
+                      _SessionRow(
+                        icon: Icons.logout_rounded,
+                        label: 'Clock out',
+                        value: end == null
+                            ? (working ? 'In progress' : 'Not recorded')
+                            : DateTimeUtils.formatTime(end),
+                        date: end,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+                const _SectionTitle(
+                  'Quick access',
+                  subtitle: 'Everything you need for your workday',
+                ),
+                const SizedBox(height: 14),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth >= 560 ? 3 : 2;
+                    final width =
+                        (constraints.maxWidth - (columns - 1) * 12) / columns;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children:
+                          [
+                                _Shortcut(
+                                  icon: Icons.event_available_rounded,
+                                  title: 'Leave request',
+                                  subtitle: 'Plan your time off',
+                                  color: AppColors.accent,
+                                  onTap: () => ref
+                                      .read(
+                                        dashboardNavigationProvider.notifier,
+                                      )
+                                      .select(DashboardTab.leave),
+                                ),
+                                _Shortcut(
+                                  icon: Icons.more_time_rounded,
+                                  title: 'Overtime request',
+                                  subtitle: 'Submit extra working hours',
+                                  color: const Color(0xFF94601B),
+                                  onTap: () => ref
+                                      .read(
+                                        dashboardNavigationProvider.notifier,
+                                      )
+                                      .select(DashboardTab.overtime),
+                                ),
+                                _Shortcut(
+                                  icon: Icons.fact_check_rounded,
+                                  title: 'Attendance correction',
+                                  subtitle: 'Report a missing entry',
+                                  color: const Color(0xFF6C59AA),
+                                  onTap: () => ref
+                                      .read(
+                                        dashboardNavigationProvider.notifier,
+                                      )
+                                      .select(DashboardTab.missing),
+                                ),
+                                _Shortcut(
+                                  icon: Icons.person_rounded,
+                                  title: 'My profile',
+                                  subtitle: 'Your employee details',
+                                  color: AppColors.accent,
+                                  onTap: () => ref
+                                      .read(
+                                        dashboardNavigationProvider.notifier,
+                                      )
+                                      .select(DashboardTab.profile),
+                                ),
+                              ]
+                              .map(
+                                (tile) => SizedBox(width: width, child: tile),
+                              )
+                              .toList(),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
               ],
-              AttendanceClock(
-                now: now,
-                working: working,
-                completed: completedToday,
-                loading: attendance.isLoading || attendance.isFetchingToday,
-                loadingMessage: attendance.isFetchingToday
-                    ? "Loading today's attendance..."
-                    : 'Verifying location...',
-                elapsed: elapsed,
-                checkIn: start,
-                onToggle:
-                    !attendance.hasLoadedToday ||
-                        completedToday ||
-                        (record != null && !isToday)
-                    ? null
-                    : () {
-                        final notifier = ref.read(
-                          attendanceViewModelProvider.notifier,
-                        );
-                        if (working) {
-                          notifier.clockOutAttendance();
-                        } else {
-                          notifier.clockInAttendance();
-                        }
-                      },
-              ),
-              const SizedBox(height: 24),
-              const _SectionTitle(
-                'Attendance summary',
-                subtitle: 'Your latest recorded session',
-              ),
-              const SizedBox(height: 12),
-              _Surface(
-                child: Column(
-                  children: [
-                    _SessionRow(
-                      icon: Icons.login_rounded,
-                      label: 'Clock in',
-                      value: start == null
-                          ? 'Not recorded'
-                          : DateTimeUtils.formatTime(start),
-                      date: start,
-                    ),
-                    const Divider(height: 25, color: Color(0xFFF0F3F7)),
-                    _SessionRow(
-                      icon: Icons.logout_rounded,
-                      label: 'Clock out',
-                      value: end == null
-                          ? (working ? 'In progress' : 'Not recorded')
-                          : DateTimeUtils.formatTime(end),
-                      date: end,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle(
-                'Requests',
-                subtitle: 'Manage your work records',
-              ),
-              const SizedBox(height: 12),
-              _Surface(
-                child: Column(
-                  children: [
-                    _Shortcut(
-                      icon: Icons.date_range_outlined,
-                      title: 'Leave request',
-                      subtitle: 'Plan your time off',
-                      onTap: () => ref
-                          .read(dashboardNavigationProvider.notifier)
-                          .select(DashboardTab.leave),
-                    ),
-                    const Divider(height: 25),
-                    _Shortcut(
-                      icon: Icons.schedule_outlined,
-                      title: 'Overtime request',
-                      subtitle: 'Submit extra working hours',
-                      onTap: () => ref
-                          .read(dashboardNavigationProvider.notifier)
-                          .select(DashboardTab.overtime),
-                    ),
-                    const Divider(height: 25),
-                    _Shortcut(
-                      icon: Icons.assignment_outlined,
-                      title: 'Attendance correction',
-                      subtitle: 'Report a missing entry',
-                      onTap: () => ref
-                          .read(dashboardNavigationProvider.notifier)
-                          .select(DashboardTab.missing),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -271,8 +350,15 @@ class _Surface extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: const Color(0xFFE4E7EC)),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.border),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x061C96C5),
+          blurRadius: 16,
+          offset: Offset(0, 6),
+        ),
+      ],
     ),
     child: child,
   );
@@ -318,10 +404,10 @@ class _SessionRow extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F6F8),
+          color: AppColors.accentLight,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: const Color(0xFF667085), size: 19),
+        child: Icon(icon, color: AppColors.accent, size: 19),
       ),
       const SizedBox(width: 12),
       Expanded(
@@ -360,45 +446,60 @@ class _Shortcut extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    required this.color,
   });
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(6),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: _muted),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: _ink,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: const BorderSide(color: AppColors.border),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 160),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .09),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: _muted, fontSize: 13),
+                child: Icon(icon, color: color, size: 25),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: _ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: _muted,
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, color: _muted, size: 20),
-        ],
+        ),
       ),
     ),
   );

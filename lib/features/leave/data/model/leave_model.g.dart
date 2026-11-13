@@ -13,6 +13,7 @@ LeaveModel _$LeaveModelFromJson(Map<String, dynamic> json) => LeaveModel(
   endDate: DateTime.parse(json['end_date'] as String),
   reason: json['reason'] as String,
   status: json['status'] as String,
+  rejectionReason: json['rejection_reason'] as String?,
 );
 
 Map<String, dynamic> _$LeaveModelToJson(LeaveModel instance) =>
@@ -23,4 +24,5 @@ Map<String, dynamic> _$LeaveModelToJson(LeaveModel instance) =>
       'end_date': instance.endDate.toIso8601String(),
       'reason': instance.reason,
       'status': instance.status,
+      'rejection_reason': instance.rejectionReason,
     };

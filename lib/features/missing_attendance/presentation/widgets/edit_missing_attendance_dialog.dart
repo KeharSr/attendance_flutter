@@ -114,7 +114,7 @@ class _EditMissingAttendanceDialogState
           style: TextStyle(color: requestMuted, fontSize: 12, height: 1.5),
         ),
         const SizedBox(height: 18),
-        const RequestLabel('Reason'),
+        const RequestLabel('Reason', newText: '*'),
         TextFormField(
           controller: _reasonController,
           enabled: !state.isLoading,

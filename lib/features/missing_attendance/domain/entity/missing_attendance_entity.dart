@@ -1,13 +1,14 @@
 import 'package:equatable/equatable.dart';
 
 class MissingAttendanceEntity extends Equatable {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String missingDate;
   final String requestedCheckIn;
   final String requestCheckOut;
   final String reason;
   final String status;
+  final String? rejectReason;
 
   const MissingAttendanceEntity({
     required this.id,
@@ -17,6 +18,7 @@ class MissingAttendanceEntity extends Equatable {
     required this.requestCheckOut,
     required this.reason,
     required this.status,
+    this.rejectReason,
   });
   @override
   List<Object?> get props => [
@@ -27,5 +29,6 @@ class MissingAttendanceEntity extends Equatable {
     requestCheckOut,
     reason,
     status,
+    rejectReason,
   ];
 }

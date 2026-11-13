@@ -7,17 +7,24 @@ import 'package:equatable/equatable.dart';
 
 class OvertimeRequestParams extends Equatable {
   final String workDate;
-  final double overtimeHours;
+  final String overtimeStartTime;
+  final String overtimeEndTime;
   final String reason;
 
   const OvertimeRequestParams({
     required this.workDate,
-    required this.overtimeHours,
+    required this.overtimeStartTime,
+    required this.overtimeEndTime,
     required this.reason,
   });
 
   @override
-  List<Object?> get props => [workDate, overtimeHours, reason];
+  List<Object?> get props => [
+    workDate,
+    overtimeStartTime,
+    overtimeEndTime,
+    reason,
+  ];
 }
 
 class OvertimeRequestUsecase
@@ -30,7 +37,8 @@ class OvertimeRequestUsecase
   Future<Either<Failure, OvertimeEntity>> call(OvertimeRequestParams params) {
     return _iOvertimeRepository.addOvertime(
       workDate: params.workDate,
-      overtimeHours: params.overtimeHours,
+      overtimeStartTime: params.overtimeStartTime,
+      overtimeEndTime: params.overtimeEndTime,
       reason: params.reason,
     );
   }

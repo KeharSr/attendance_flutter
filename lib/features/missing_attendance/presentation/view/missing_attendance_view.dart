@@ -117,6 +117,11 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
       AppSnackBar.error(context, 'Select the date, check-in, and check-out.');
       return;
     }
+    if (DateUtils.dateOnly(_missingDate!)
+        .isAfter(DateUtils.dateOnly(DateTime.now()))) {
+      AppSnackBar.error(context, 'Missing date cannot be in the future.');
+      return;
+    }
     if (_toMinutes(_checkOut!) <= _toMinutes(_checkIn!)) {
       AppSnackBar.error(context, 'Check-out must be after check-in.');
       return;
@@ -184,6 +189,7 @@ class _ReportForm extends StatelessWidget {
                   final date = await showAppDatePicker(
                     context,
                     selectedDate: missingDate,
+                    lastDate: DateTime.now(),
                     helpText: 'Select missing date',
                   );
                   if (date != null && context.mounted) onDateSelected(date);
@@ -215,7 +221,7 @@ class _ReportForm extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 18),
-              const RequestLabel('Reason'),
+              const RequestLabel('Reason', newText: "*"),
               TextFormField(
                 enabled: !state.isLoading,
                 controller: reasonController,

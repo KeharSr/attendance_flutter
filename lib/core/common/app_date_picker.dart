@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_theme.dart';
+
 Future<DateTime?> showAppDatePicker(
   BuildContext context, {
   DateTime? selectedDate,
@@ -8,7 +10,9 @@ Future<DateTime?> showAppDatePicker(
   String helpText = 'Select date',
 }) {
   final today = DateUtils.dateOnly(DateTime.now());
-  final minimumDate = DateUtils.dateOnly(firstDate ?? today);
+  final minimumDate = DateUtils.dateOnly(
+    firstDate ?? today.subtract(const Duration(days: 3)),
+  );
   final maximumDate = DateUtils.dateOnly(
     lastDate ?? DateTime(today.year + 2, today.month, today.day),
   );
@@ -31,10 +35,10 @@ Future<DateTime?> showAppDatePicker(
     builder: (context, child) => Theme(
       data: Theme.of(context).copyWith(
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFF006B7A),
+          primary: AppColors.accent,
           onPrimary: Colors.white,
           surface: Colors.white,
-          onSurface: Color(0xFF182230),
+          onSurface: AppColors.ink,
         ),
         datePickerTheme: DatePickerThemeData(
           backgroundColor: Colors.white,
@@ -42,11 +46,11 @@ Future<DateTime?> showAppDatePicker(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
-          headerBackgroundColor: const Color(0xFF006B7A),
-          headerForegroundColor: Colors.white,
-          todayBackgroundColor: const WidgetStatePropertyAll(Color(0x14006B7A)),
-          todayForegroundColor: const WidgetStatePropertyAll(Color(0xFF006B7A)),
-          dayOverlayColor: const WidgetStatePropertyAll(Color(0x14006B7A)),
+          headerBackgroundColor: AppColors.skyPale,
+          headerForegroundColor: AppColors.ink,
+          todayBackgroundColor: const WidgetStatePropertyAll(AppColors.skyPale),
+          todayForegroundColor: const WidgetStatePropertyAll(AppColors.accent),
+          dayOverlayColor: const WidgetStatePropertyAll(AppColors.skyPale),
         ),
       ),
       child: child!,

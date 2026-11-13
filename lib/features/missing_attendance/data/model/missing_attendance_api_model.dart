@@ -4,13 +4,14 @@ part 'missing_attendance_api_model.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MissingAttendanceApiModel {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String missingDate;
   final String requestedCheckIn;
   final String requestCheckOut;
   final String reason;
   final String status;
+  final String? rejectReason;
 
   const MissingAttendanceApiModel({
     required this.id,
@@ -20,12 +21,13 @@ class MissingAttendanceApiModel {
     required this.requestCheckOut,
     required this.reason,
     required this.status,
+    this.rejectReason,
   });
 
   factory MissingAttendanceApiModel.fromJson(Map<String, dynamic> json) {
     return MissingAttendanceApiModel(
-      id: _parseInt(json['id'], 'id'),
-      userId: _parseInt(json['user_id'], 'user_id'),
+      id: _parseString(json['id']),
+      userId: _parseString(json['user_id']),
       missingDate: _parseString(json['missing_date']),
       requestedCheckIn: _parseString(json['requested_check_in']),
       requestCheckOut: _parseString(
@@ -33,6 +35,7 @@ class MissingAttendanceApiModel {
       ),
       reason: _parseString(json['reason']),
       status: _parseString(json['status'], fallback: 'Pending'),
+      rejectReason: _parseString(json['reject_reason']),
     );
   }
 
@@ -48,6 +51,7 @@ class MissingAttendanceApiModel {
       requestCheckOut: entity.requestCheckOut,
       reason: entity.reason,
       status: entity.status,
+      rejectReason: entity.rejectReason ?? '',
     );
   }
 
@@ -61,6 +65,7 @@ class MissingAttendanceApiModel {
       requestCheckOut: requestCheckOut,
       reason: reason,
       status: status,
+      rejectReason: rejectReason,
     );
   }
 

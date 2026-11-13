@@ -19,7 +19,8 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
 
   Future<void> createOvertimeRequest({
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     state = state.copyWith(
@@ -35,7 +36,8 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
     final result = await overtimeRequestUsecaseProvider.call(
       OvertimeRequestParams(
         workDate: workDate,
-        overtimeHours: overtimeHours,
+        overtimeStartTime: overtimeStartTime,
+        overtimeEndTime: overtimeEndTime,
         reason: reason,
       ),
     );
@@ -94,7 +96,8 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
   Future<void> editOvertimeRequest({
     required String overtimeId,
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     state = state.copyWith(
@@ -111,7 +114,8 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
       EditOvertimeRequestParams(
         overtimeId: overtimeId,
         workDate: workDate,
-        overtimeHours: overtimeHours,
+        overtimeStartTime: overtimeStartTime,
+        overtimeEndTime: overtimeEndTime,
         reason: reason,
       ),
     );
@@ -160,7 +164,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
         );
       },
       (success) {
-        final idToRemove = int.parse(overtimeId);
+        final idToRemove = overtimeId;
         final updatedOvertime = state.overtime
             .where((item) => item.id != idToRemove)
             .toList();

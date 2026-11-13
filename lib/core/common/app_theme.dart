@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const background = Color(0xFFF5F6F8);
+  static const background = Color(0xFFF4F9FC);
+  static const skyPale = Color(0xFFCFECF7);
+  static const skyLight = Color(0xFFA0D9EF);
+  static const sky = Color(0xFF62C1E5);
+  static const blue = Color(0xFF20A7DB);
+  static const blueDeep = Color(0xFF1C96C5);
   static const surface = Colors.white;
-  static const ink = Color(0xFF182230);
+  static const ink = Color(0xFF163449);
   static const muted = Color(0xFF667085);
-  static const accent = Color(0xFF006B7A);
-  static const accentLight = Color(0xFFEAF4F5);
-  static const border = Color(0xFFE4E7EC);
+  static const accent = Color(0xFF126B8E);
+  static const accentLight = skyPale;
+  static const border = Color(0xFFDFEDF4);
   static const success = Color(0xFF067647);
   static const danger = Color(0xFFB42318);
 }
@@ -15,7 +20,7 @@ abstract final class AppColors {
 ThemeData buildAppTheme() {
   final base = ThemeData(
     useMaterial3: true,
-    fontFamily: 'Roboto',
+    fontFamily: 'Poppins',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.accent,
       primary: AppColors.accent,
@@ -26,9 +31,9 @@ ThemeData buildAppTheme() {
     ),
     scaffoldBackgroundColor: AppColors.background,
   );
-  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(18));
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(14),
     borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
   );
   return base.copyWith(
@@ -97,6 +102,7 @@ ThemeData buildAppTheme() {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       titleTextStyle: const TextStyle(
+        fontFamily: 'Poppins',
         color: AppColors.ink,
         fontSize: 20,
         fontWeight: FontWeight.w600,

@@ -10,14 +10,16 @@ class OvertimeDataSource implements IAbstractOvertimeDataSource {
   @override
   Future<OvertimeApiModel> addOvertime({
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     final response = await _apiClient.post(
       ApiEndpoints.overtimeRequest,
       data: {
         'workDate': workDate,
-        'overtimeHours': overtimeHours,
+        'overtimeStartTime': overtimeStartTime,
+        'overtimeEndTime': overtimeEndTime,
         'reason': reason,
       },
     );
@@ -44,14 +46,16 @@ class OvertimeDataSource implements IAbstractOvertimeDataSource {
   Future<OvertimeApiModel> editOvertime({
     required String overtimeId,
     required String workDate,
-    required double overtimeHours,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
     required String reason,
   }) async {
     final response = await _apiClient.patch(
       ApiEndpoints.editOvertime(overtimeId),
       data: {
         'workDate': workDate,
-        'overtimeHours': overtimeHours,
+        'overtimeStartTime': overtimeStartTime,
+        'overtimeEndTime': overtimeEndTime,
         'reason': reason,
       },
     );

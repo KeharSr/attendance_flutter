@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/navigator/global_navigator.dart';
 import 'package:attendance_flutter/features/splash/presentation/view/splash_view.dart';
 import 'package:attendance_flutter/features/splash/presentation/view_model/splash_view_model.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
@@ -16,7 +17,6 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
-  final _navigatorKey = GlobalKey<NavigatorState>();
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -26,10 +26,10 @@ class _AppState extends ConsumerState<App> {
     final authState = ref.watch(authViewModelProvider);
 
     return MaterialApp(
-      navigatorKey: _navigatorKey,
+      navigatorKey: navigator,
       scaffoldMessengerKey: _messengerKey,
       builder: (context, child) => AppNotificationListener(
-        navigatorKey: _navigatorKey,
+        navigatorKey: navigator,
         messengerKey: _messengerKey,
         child: child ?? const SizedBox.shrink(),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:attendance_flutter/core/common/app_theme.dart';
+import 'package:flutter/services.dart';
+
+import 'app_theme.dart';
 
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   const AppTopBar({
@@ -9,9 +11,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions = const [],
     this.showBrand = false,
     this.automaticallyImplyLeading = false,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor = AppColors.skyPale,
     this.foregroundColor = AppColors.ink,
-    this.height = 76,
+    this.height = 88,
     this.bottom,
     super.key,
   });
@@ -37,52 +39,57 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     foregroundColor: foregroundColor,
     automaticallyImplyLeading: automaticallyImplyLeading,
     leading: leading,
-    titleSpacing: 20,
+    centerTitle: false,
+    systemOverlayStyle: SystemUiOverlayStyle.dark,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+    ),
+    clipBehavior: Clip.antiAlias,
+    flexibleSpace: DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFF5FCFF),
+            backgroundColor,
+            AppColors.skyLight,
+          ],
+        ),
+      ),
+    ),
+    titleSpacing: leading == null && !automaticallyImplyLeading ? 20 : 8,
     bottom: bottom,
-    shape: const Border(bottom: BorderSide(color: AppColors.border)),
-    title: Row(
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (showBrand && leading == null) ...[
-          Image.asset(
-            'assets/images/gadgetbyte_logo.jpg',
-            width: 40,
-            height: 40,
-            semanticLabel: 'GBN Store',
-          ),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: foregroundColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -.4,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 3),
-                Text(
-                  subtitle!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ],
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: foregroundColor,
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.3,
           ),
         ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.accent,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ],
     ),
     actions: [...actions, const SizedBox(width: 12)],
