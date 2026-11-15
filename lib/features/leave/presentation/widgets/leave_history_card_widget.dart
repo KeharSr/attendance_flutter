@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
@@ -19,7 +20,7 @@ class LeaveHistoryCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return RequestHistoryTile(
       typeLabel: 'Leave request',
-      icon: Icons.event_available_outlined,
+      icon: LucideIcons.calendarCheck,
       title: DateTimeUtils.formatDate(request.startDate),
       detail: 'Leave request',
       startLabel: 'From',

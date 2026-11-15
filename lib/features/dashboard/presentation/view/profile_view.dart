@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
@@ -82,13 +83,13 @@ class ProfileView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   _ProfileDetail(
-                    icon: Icons.person_outline,
+                    icon: LucideIcons.user,
                     label: 'Full name',
                     value: name,
                   ),
                   const SizedBox(height: 22),
                   _ProfileDetail(
-                    icon: Icons.phone_outlined,
+                    icon: LucideIcons.phone,
                     label: 'Phone number',
                     value: phone == null || phone.isEmpty
                         ? 'Not provided'
@@ -96,7 +97,7 @@ class ProfileView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 22),
                   _ProfileDetail(
-                    icon: Icons.badge_outlined,
+                    icon: LucideIcons.idCard,
                     label: 'Employee ID',
                     value: id == null || id.isEmpty ? 'Not provided' : id,
                   ),
@@ -128,7 +129,7 @@ class ProfileView extends ConsumerWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.danger,
                       ),
-                      icon: const Icon(Icons.logout, size: 20),
+                      icon: const Icon(LucideIcons.logOut, size: 20),
                       label: Text(
                         auth.isLoggingOut ? 'Signing out...' : 'Sign out',
                       ),

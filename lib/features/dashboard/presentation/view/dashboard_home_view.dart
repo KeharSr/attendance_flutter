@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/widgets/attendance_clock.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
@@ -137,7 +138,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                       Row(
                         children: [
                           const Icon(
-                            Icons.wb_sunny_outlined,
+                            LucideIcons.sun,
                             color: Colors.white,
                             size: 18,
                           ),
@@ -245,7 +246,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                   child: Column(
                     children: [
                       _SessionRow(
-                        icon: Icons.login_rounded,
+                        icon: LucideIcons.logIn,
                         label: 'Clock in',
                         value: start == null
                             ? 'Not recorded'
@@ -254,7 +255,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                       ),
                       const Divider(height: 25, color: Color(0xFFF0F3F7)),
                       _SessionRow(
-                        icon: Icons.logout_rounded,
+                        icon: LucideIcons.logOut,
                         label: 'Clock out',
                         value: end == null
                             ? (working ? 'In progress' : 'Not recorded')
@@ -281,7 +282,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                       children:
                           [
                                 _Shortcut(
-                                  icon: Icons.event_available_rounded,
+                                  icon: LucideIcons.calendarCheck,
                                   title: 'Leave request',
                                   subtitle: 'Plan your time off',
                                   color: AppColors.accent,
@@ -292,7 +293,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                                       .select(DashboardTab.leave),
                                 ),
                                 _Shortcut(
-                                  icon: Icons.more_time_rounded,
+                                  icon: LucideIcons.clockPlus,
                                   title: 'Overtime request',
                                   subtitle: 'Submit extra working hours',
                                   color: const Color(0xFF94601B),
@@ -303,7 +304,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                                       .select(DashboardTab.overtime),
                                 ),
                                 _Shortcut(
-                                  icon: Icons.fact_check_rounded,
+                                  icon: LucideIcons.clipboardCheck,
                                   title: 'Attendance correction',
                                   subtitle: 'Report a missing entry',
                                   color: const Color(0xFF6C59AA),
@@ -314,7 +315,7 @@ class _DashboardHomeViewState extends ConsumerState<DashboardHomeView> {
                                       .select(DashboardTab.missing),
                                 ),
                                 _Shortcut(
-                                  icon: Icons.person_rounded,
+                                  icon: LucideIcons.user,
                                   title: 'My profile',
                                   subtitle: 'Your employee details',
                                   color: AppColors.accent,

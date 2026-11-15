@@ -13,7 +13,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.automaticallyImplyLeading = false,
     this.backgroundColor = AppColors.skyPale,
     this.foregroundColor = AppColors.ink,
-    this.height = 88,
+    this.height = 56,
     this.bottom,
     super.key,
   });
@@ -72,13 +72,13 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: foregroundColor,
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             letterSpacing: -.3,
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             subtitle!,
             maxLines: 1,

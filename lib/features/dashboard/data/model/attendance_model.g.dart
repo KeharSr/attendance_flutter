@@ -8,8 +8,8 @@ part of 'attendance_model.dart';
 
 AttendanceModel _$AttendanceModelFromJson(Map<String, dynamic> json) =>
     AttendanceModel(
-      id: (json['id'] as num).toInt(),
-      userId: (json['user_id'] as num).toInt(),
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
       checkIn: json['check_in'] as String,
       checkOut: json['check_out'] as String?,
       workDate: json['work_date'] as String,

@@ -6,10 +6,28 @@ import 'package:attendance_flutter/core/dependency_injection/dependency_injectio
 import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view_model/view_model/dashboard_navigation.dart';
+import 'package:attendance_flutter/features/leave/presentation/view_model/view_model/leave_view_model.dart';
+import 'package:attendance_flutter/features/overtime/presentation/view_model/view_model/overtime_view_model.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/view_model/view_model/missing_attendance_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _Leave extends LeaveViewModel {
+  @override
+  Future<void> getAllLeaves() async {}
+}
+
+class _Overtime extends OvertimeViewModel {
+  @override
+  Future<void> getAllOvertimeRequest() async {}
+}
+
+class _Missing extends MissingAttendanceViewModel {
+  @override
+  Future<void> fetchMissingAttendance() async {}
+}
 
 void main() {
   testWidgets('all dashboard pages fit a narrow screen with enlarged text', (
@@ -28,6 +46,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        leaveViewModelProvider.overrideWith(_Leave.new),
+        overtimeViewModelProvider.overrideWith(_Overtime.new),
+        missingAttendanceViewModelProvider.overrideWith(_Missing.new),
         todayAttendanceUsecaseProvider.overrideWithValue(
           TodayAttendanceUsecase(
             iAttendanceRepository: StubAttendanceRepository(),

@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/common/request_list_page.dart';
 import 'package:attendance_flutter/core/common/request_dialogs.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
 import 'package:attendance_flutter/features/leave/presentation/widgets/edit_leave_dialog.dart';
@@ -17,6 +18,9 @@ class LeaveView extends ConsumerStatefulWidget {
 }
 
 class _LeaveViewState extends ConsumerState<LeaveView> {
+  final _pageKey = GlobalKey<RequestListPageState>();
+  BuildContext get _feedbackContext =>
+      _pageKey.currentState?.feedbackContext ?? context;
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
   @override
@@ -52,8 +56,9 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
     ref.listen(leaveViewModelProvider, (previous, next) {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
-        AppSnackBar.success(context, next.successMessage!);
+        AppSnackBar.success(_feedbackContext, next.successMessage!);
         if (next.successMessage == 'Leave request submitted for review.') {
+          _pageKey.currentState?.showHistory();
           _formKey.currentState?.reset();
           _reasonController.clear();
           ref.read(leaveViewModelProvider.notifier).clearSelectedDates();
@@ -61,11 +66,14 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
       }
       if (previous?.errorMessage != next.errorMessage &&
           next.errorMessage != null) {
-        AppSnackBar.error(context, next.errorMessage!);
+        AppSnackBar.error(_feedbackContext, next.errorMessage!);
       }
     });
-    return RequestTabs(
-      onHistory: () {
+    return RequestListPage(
+      key: _pageKey,
+      addLabel: 'Add leave request',
+      loading: state.isLoading,
+      onLoad: () {
         if (!state.isLoading) {
           ref.read(leaveViewModelProvider.notifier).getAllLeaves();
         }
@@ -153,14 +161,14 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
                     if (!(_formKey.currentState?.validate() ?? false)) return;
                     if (state.startDate == null || state.endDate == null) {
                       AppSnackBar.error(
-                        context,
+                        _feedbackContext,
                         'Select a start date and end date.',
                       );
                       return;
                     }
                     if (state.endDate!.isBefore(state.startDate!)) {
                       AppSnackBar.error(
-                        context,
+                        _feedbackContext,
                         'End date must be on or after start date.',
                       );
                       return;

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 
@@ -60,28 +61,28 @@ class CustomNavigationBar extends StatelessWidget {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            icon: Icon(LucideIcons.house),
+            selectedIcon: Icon(LucideIcons.house),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.more_time_rounded),
-            selectedIcon: Icon(Icons.more_time_rounded),
+            icon: Icon(LucideIcons.clockPlus),
+            selectedIcon: Icon(LucideIcons.clockPlus),
             label: 'Overtime',
           ),
           NavigationDestination(
-            icon: Icon(Icons.event_available_outlined),
-            selectedIcon: Icon(Icons.event_available_rounded),
+            icon: Icon(LucideIcons.calendarCheck),
+            selectedIcon: Icon(LucideIcons.calendarCheck),
             label: 'Leave',
           ),
           NavigationDestination(
-            icon: Icon(Icons.fact_check_outlined),
-            selectedIcon: Icon(Icons.fact_check_rounded),
+            icon: Icon(LucideIcons.clipboardCheck),
+            selectedIcon: Icon(LucideIcons.clipboardCheck),
             label: 'Missing',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
+            icon: Icon(LucideIcons.user),
+            selectedIcon: Icon(LucideIcons.user),
             label: 'Profile',
           ),
         ],

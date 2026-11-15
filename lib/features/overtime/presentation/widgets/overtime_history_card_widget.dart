@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
@@ -19,7 +20,7 @@ class OvertimeHistoryCardWidget extends StatelessWidget {
     final date = DateTime.tryParse(request.workDate);
     return RequestHistoryTile(
       typeLabel: 'Overtime request',
-      icon: Icons.more_time_rounded,
+      icon: LucideIcons.clockPlus,
       title: request.workDate.isEmpty
           ? 'Overtime request #${request.id}'
           : date == null

@@ -1,3 +1,5 @@
+import 'package:attendance_flutter/core/common/request_list_page.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_dialogs.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
 import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/edit_missing_attendance_dialog.dart';
@@ -21,6 +23,9 @@ class MissingAttendanceView extends ConsumerStatefulWidget {
 }
 
 class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
+  final _pageKey = GlobalKey<RequestListPageState>();
+  BuildContext get _feedbackContext =>
+      _pageKey.currentState?.feedbackContext ?? context;
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
   DateTime? _missingDate;
@@ -60,8 +65,9 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
     ref.listen(missingAttendanceViewModelProvider, (previous, next) {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
-        AppSnackBar.success(context, next.successMessage!);
+        AppSnackBar.success(_feedbackContext, next.successMessage!);
         if (next.successMessage == 'Missing Attendance Created Successfully') {
+          _pageKey.currentState?.showHistory();
           _formKey.currentState?.reset();
           _reasonController.clear();
           setState(() {
@@ -73,12 +79,15 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
       }
       if (previous?.failureMessage != next.failureMessage &&
           next.failureMessage != null) {
-        AppSnackBar.error(context, next.failureMessage!);
+        AppSnackBar.error(_feedbackContext, next.failureMessage!);
       }
     });
 
-    return RequestTabs(
-      onHistory: () {
+    return RequestListPage(
+      key: _pageKey,
+      addLabel: 'Add missing attendance request',
+      loading: state.isLoading,
+      onLoad: () {
         if (!state.isLoading) {
           ref
               .read(missingAttendanceViewModelProvider.notifier)
@@ -114,16 +123,22 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
     if (ref.read(missingAttendanceViewModelProvider).isLoading) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_missingDate == null || _checkIn == null || _checkOut == null) {
-      AppSnackBar.error(context, 'Select the date, check-in, and check-out.');
+      AppSnackBar.error(
+        _feedbackContext,
+        'Select the date, check-in, and check-out.',
+      );
       return;
     }
     if (DateUtils.dateOnly(_missingDate!)
         .isAfter(DateUtils.dateOnly(DateTime.now()))) {
-      AppSnackBar.error(context, 'Missing date cannot be in the future.');
+      AppSnackBar.error(
+        _feedbackContext,
+        'Missing date cannot be in the future.',
+      );
       return;
     }
     if (_toMinutes(_checkOut!) <= _toMinutes(_checkIn!)) {
-      AppSnackBar.error(context, 'Check-out must be after check-in.');
+      AppSnackBar.error(_feedbackContext, 'Check-out must be after check-in.');
       return;
     }
 
@@ -201,6 +216,10 @@ class _ReportForm extends StatelessWidget {
                 value: checkIn,
                 onTap: () async {
                   final time = await showTimePicker(
+                    switchToInputEntryModeIcon: const Icon(
+                      LucideIcons.keyboard,
+                    ),
+                    switchToTimerEntryModeIcon: const Icon(LucideIcons.clock),
                     context: context,
                     initialTime: checkIn ?? const TimeOfDay(hour: 9, minute: 0),
                   );
@@ -213,6 +232,10 @@ class _ReportForm extends StatelessWidget {
                 value: checkOut,
                 onTap: () async {
                   final time = await showTimePicker(
+                    switchToInputEntryModeIcon: const Icon(
+                      LucideIcons.keyboard,
+                    ),
+                    switchToTimerEntryModeIcon: const Icon(LucideIcons.clock),
                     context: context,
                     initialTime:
                         checkOut ?? const TimeOfDay(hour: 17, minute: 0),
@@ -280,10 +303,10 @@ class _TimeField extends StatelessWidget {
           onTap: onTap,
           initialValue: value?.format(context),
           style: const TextStyle(color: requestInk, fontSize: 14),
-          decoration: requestInput('Select time', icon: Icons.schedule_rounded)
+          decoration: requestInput('Select time', icon: LucideIcons.clock)
               .copyWith(
                 suffixIcon: const Icon(
-                  Icons.expand_more_rounded,
+                  LucideIcons.chevronDown,
                   color: requestMuted,
                 ),
               ),

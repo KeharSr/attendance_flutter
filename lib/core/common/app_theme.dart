@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
@@ -29,7 +30,7 @@ ThemeData buildAppTheme() {
       onSurface: AppColors.ink,
       error: AppColors.danger,
     ),
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor: Colors.white,
   );
   final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(18));
   final border = OutlineInputBorder(
@@ -37,6 +38,12 @@ ThemeData buildAppTheme() {
     borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
   );
   return base.copyWith(
+    actionIconTheme: ActionIconThemeData(
+      backButtonIconBuilder: (context) => const Icon(LucideIcons.arrowLeft),
+      closeButtonIconBuilder: (context) => const Icon(LucideIcons.x),
+      drawerButtonIconBuilder: (context) => const Icon(LucideIcons.menu),
+      endDrawerButtonIconBuilder: (context) => const Icon(LucideIcons.menu),
+    ),
     textTheme: base.textTheme.apply(
       bodyColor: AppColors.ink,
       displayColor: AppColors.ink,

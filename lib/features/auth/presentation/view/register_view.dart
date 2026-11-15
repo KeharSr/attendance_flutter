@@ -1,3 +1,4 @@
+// import 'package:lucide_icons_flutter/lucide_icons.dart';
 // import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 // import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 // import 'package:attendance_flutter/core/common/app_snackbar.dart';
@@ -94,7 +95,7 @@
 //                             textInputAction: TextInputAction.next,
 //                             decoration: const InputDecoration(
 //                               hintText: 'e.g. Alex Morgan',
-//                               prefixIcon: Icon(Icons.badge_outlined),
+//                               prefixIcon: Icon(LucideIcons.idCard),
 //                             ),
 //                             validator: (value) {
 //                               if (value == null || value.trim().isEmpty) {
@@ -112,7 +113,7 @@
 //                             textInputAction: TextInputAction.next,
 //                             decoration: const InputDecoration(
 //                               hintText: 'e.g. 98XXXXXXXX',
-//                               prefixIcon: Icon(Icons.phone_outlined),
+//                               prefixIcon: Icon(LucideIcons.phone),
 //                             ),
 //                             validator: (value) {
 //                               final phone = value?.trim() ?? '';
@@ -135,7 +136,7 @@
 //                             decoration: InputDecoration(
 //                               hintText: 'At least 6 characters',
 //                               prefixIcon: const Icon(
-//                                 Icons.lock_outline_rounded,
+//                                 LucideIcons.lock,
 //                               ),
 //                               suffixIcon: IconButton(
 //                                 tooltip: willPasswordShow
@@ -148,8 +149,8 @@
 //                                 },
 //                                 icon: Icon(
 //                                   willPasswordShow
-//                                       ? Icons.visibility_off_outlined
-//                                       : Icons.visibility_outlined,
+//                                       ? LucideIcons.eyeOff
+//                                       : LucideIcons.eye,
 //                                 ),
 //                               ),
 //                             ),
@@ -197,7 +198,7 @@
 //                                       label: 'Creating profile',
 //                                     )
 //                                   : const Icon(
-//                                       Icons.arrow_forward_rounded,
+//                                       LucideIcons.arrowRight,
 //                                       size: 20,
 //                                     ),
 //                               label: Text(

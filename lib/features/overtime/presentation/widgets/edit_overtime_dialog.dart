@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
@@ -72,7 +73,7 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
                 initialValue: DateTimeUtils.formatDate(_workDate),
                 decoration: requestInput(
                   'Choose a date',
-                  icon: Icons.calendar_today_outlined,
+                  icon: LucideIcons.calendar,
                 ),
                 onTap: () async {
                   final date = await showAppDatePicker(
@@ -94,7 +95,7 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
                 enabled: !isLoading,
                 decoration: requestInput(
                   'Choose start time',
-                  icon: Icons.schedule_rounded,
+                  icon: LucideIcons.clock,
                 ),
                 onTap: () => _pickTime(_startTimeController),
                 validator: (value) => value == null || value.isEmpty
@@ -109,7 +110,7 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
                 enabled: !isLoading,
                 decoration: requestInput(
                   'Choose end time',
-                  icon: Icons.schedule_rounded,
+                  icon: LucideIcons.clock,
                 ),
                 onTap: () => _pickTime(_endTimeController),
                 validator: (value) {
@@ -170,6 +171,8 @@ class _EditOvertimeDialogState extends ConsumerState<EditOvertimeDialog> {
   Future<void> _pickTime(TextEditingController controller) async {
     final parts = controller.text.split(':');
     final selected = await showTimePicker(
+      switchToInputEntryModeIcon: const Icon(LucideIcons.keyboard),
+      switchToTimerEntryModeIcon: const Icon(LucideIcons.clock),
       context: context,
       initialTime: parts.length == 2
           ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))

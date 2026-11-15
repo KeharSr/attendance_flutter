@@ -43,207 +43,237 @@ class _LoginViewState extends ConsumerState<LoginView> {
     });
     final state = ref.watch(authViewModelProvider);
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compact = constraints.maxWidth < 400;
+            final headerHeight = (constraints.maxHeight * .35).clamp(
+              230.0,
+              310.0,
+            );
+            final panelHeight = (constraints.maxHeight - headerHeight).clamp(
+              0.0,
+              double.infinity,
+            );
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? 16 : 24,
-                vertical: 22,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - 44).clamp(
-                    0.0,
-                    double.infinity,
-                  ),
-                ),
-                child: Center(
-                  child: Container(
-                    width: 485,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: compact ? 24 : 42,
-                      vertical: 42,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFE4E7EC)),
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: AutofillGroup(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _BrandHeader(),
-                            const SizedBox(height: 32),
-                            const Center(
-                              child: Text(
-                                'Sign in',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _ink,
-                                  fontSize: 28,
-                                  height: 1.25,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Center(
-                              child: Text(
-                                'Access your GBN Store employee account.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _muted,
-                                  fontSize: 14,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 36),
-                            const _FieldLabel('Phone number'),
-                            const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _phoneController,
-                              style: const TextStyle(fontSize: 14, color: _ink),
-                              validator: (value) =>
-                                  value == null || value.trim().isEmpty
-                                  ? 'Enter your phone number'
-                                  : null,
-                              keyboardType: TextInputType.phone,
-                              textInputAction: TextInputAction.next,
-                              autofillHints: const [
-                                AutofillHints.telephoneNumber,
-                              ],
-                              decoration: _fieldDecoration(
-                                'Enter your phone number',
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            const _FieldLabel('Password'),
-                            const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _passwordController,
-                              style: const TextStyle(fontSize: 14, color: _ink),
-                              validator: (value) =>
-                                  value == null || value.isEmpty
-                                  ? 'Enter your password'
-                                  : null,
-                              obscureText: !state.willPasswordShow,
-                              enableSuggestions: false,
-                              autocorrect: false,
-                              autofillHints: const [AutofillHints.password],
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) {
-                                if (!state.isLoading) _signIn();
-                              },
-                              decoration:
-                                  _fieldDecoration(
-                                    'Enter your password',
-                                  ).copyWith(
-                                    suffixIcon: TextButton(
-                                      onPressed: () => ref
-                                          .read(authViewModelProvider.notifier)
-                                          .togglePasswordVisibility(),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF467D91,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 485),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: headerHeight,
+                        child: const _BrandHeader(),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(minHeight: panelHeight),
+                        padding: EdgeInsets.fromLTRB(
+                          constraints.maxWidth < 400 ? 24 : 32,
+                          28,
+                          constraints.maxWidth < 400 ? 24 : 32,
+                          20 + MediaQuery.paddingOf(context).bottom,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(32),
+                          ),
+                        ),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight:
+                                (panelHeight -
+                                        48 -
+                                        MediaQuery.paddingOf(context).bottom)
+                                    .clamp(0.0, double.infinity),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Form(
+                                key: _formKey,
+                                child: AutofillGroup(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const _FieldLabel('Phone number'),
+                                      const SizedBox(height: 8),
+                                      TextFormField(
+                                        controller: _phoneController,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: _ink,
                                         ),
-                                        minimumSize: const Size(64, 50),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
+                                        validator: (value) =>
+                                            value == null ||
+                                                value.trim().isEmpty
+                                            ? 'Enter your phone number'
+                                            : null,
+                                        keyboardType: TextInputType.phone,
+                                        textInputAction: TextInputAction.next,
+                                        autofillHints: const [
+                                          AutofillHints.telephoneNumber,
+                                        ],
+                                        decoration: _fieldDecoration(
+                                          'Enter your phone number',
                                         ),
-                                        textStyle: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge
-                                            ?.copyWith(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      const _FieldLabel('Password'),
+                                      const SizedBox(height: 8),
+                                      TextFormField(
+                                        controller: _passwordController,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: _ink,
+                                        ),
+                                        validator: (value) =>
+                                            value == null || value.isEmpty
+                                            ? 'Enter your password'
+                                            : null,
+                                        obscureText: !state.willPasswordShow,
+                                        enableSuggestions: false,
+                                        autocorrect: false,
+                                        autofillHints: const [
+                                          AutofillHints.password,
+                                        ],
+                                        textInputAction: TextInputAction.done,
+                                        onFieldSubmitted: (_) {
+                                          if (!state.isLoading) _signIn();
+                                        },
+                                        decoration:
+                                            _fieldDecoration(
+                                              'Enter your password',
+                                            ).copyWith(
+                                              suffixIcon: TextButton(
+                                                onPressed: () => ref
+                                                    .read(
+                                                      authViewModelProvider
+                                                          .notifier,
+                                                    )
+                                                    .togglePasswordVisibility(),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: const Color(
+                                                    0xFF467D91,
+                                                  ),
+                                                  minimumSize: const Size(
+                                                    64,
+                                                    48,
+                                                  ),
+                                                  textStyle: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  state.willPasswordShow
+                                                      ? 'Hide'
+                                                      : 'Show',
+                                                ),
+                                              ),
                                             ),
                                       ),
-                                      child: Text(
-                                        state.willPasswordShow
-                                            ? 'Hide'
-                                            : 'Show',
-                                      ),
-                                    ),
-                                  ),
-                            ),
-                            const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: FilledButton(
-                                onPressed: state.isLoading ? null : _signIn,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _teal,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shadowColor: const Color(0x33008399),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  textStyle: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
-                                      ?.copyWith(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                                child: state.isLoading
-                                    ? const AppLoadingIndicator(
-                                        size: 20,
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                        label: 'Signing in',
-                                      )
-                                    : const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text('Sign in'),
-                                          SizedBox(width: 10),
-                                          Icon(
-                                            Icons.arrow_forward_rounded,
-                                            size: 16,
+                                      const SizedBox(height: 4),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: TextButton(
+                                          onPressed: state.isLoading
+                                              ? null
+                                              : _forgotPassword,
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: _teal,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 0,
+                                              vertical: 12,
+                                            ),
+                                            textStyle: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
-                                        ],
+                                          child: const Text('Forgot password?'),
+                                        ),
                                       ),
-                              ),
-                            ),
-                            const SizedBox(height: 26),
-                            const Divider(height: 1, color: Color(0xFFE5EEF2)),
-                            const SizedBox(height: 27),
-                            const Center(
-                              child: Text(
-                                'Need access? Contact your workspace administrator.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _muted,
-                                  fontSize: 12,
-                                  height: 1.6,
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: FilledButton(
+                                          onPressed: state.isLoading
+                                              ? null
+                                              : _signIn,
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: _teal,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                            textStyle: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          child: state.isLoading
+                                              ? const AppLoadingIndicator(
+                                                  size: 20,
+                                                  strokeWidth: 2,
+                                                  color: Colors.white,
+                                                  label: 'Signing in',
+                                                )
+                                              : const Text('Sign in'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              const Padding(
+                                padding: EdgeInsets.only(top: 48),
+                                child: Text(
+                                  'No account? Contact your workspace administrator.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _muted,
+                                    fontSize: 12,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             );
           },
         ),
+      ),
+    );
+  }
+
+  void _forgotPassword() {
+    FocusScope.of(context).unfocus();
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Forgot password?'),
+        content: const Text(
+          'Contact your workspace administrator to reset your password and regain access to your employee account.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
       ),
     );
   }
@@ -270,7 +300,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       filled: true,
       fillColor: Colors.white,
       hintStyle: const TextStyle(color: _muted, fontSize: 14),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 17),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
       border: border,
       enabledBorder: border,
       focusedBorder: border.copyWith(
@@ -296,7 +326,7 @@ class _FieldLabel extends StatelessWidget {
     text,
     style: const TextStyle(
       color: _ink,
-      fontSize: 14,
+      fontSize: 12,
       fontWeight: FontWeight.w500,
     ),
   );
@@ -306,64 +336,44 @@ class _BrandHeader extends StatelessWidget {
   const _BrandHeader();
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(13),
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: OverflowBox(
-            maxWidth: 77,
-            maxHeight: 77,
-            child: Image.asset(
-              'assets/images/gadgetbyte_logo.jpg',
-              width: 77,
-              height: 77,
-              semanticLabel: 'Gadgetbyte logo',
+  Widget build(BuildContext context) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: SizedBox(
+            width: 76,
+            height: 76,
+            child: OverflowBox(
+              maxWidth: 122,
+              maxHeight: 122,
+              child: Image.asset(
+                'assets/images/gadgetbyte_logo.jpg',
+                width: 122,
+                height: 122,
+                semanticLabel: 'Gadgetbyte logo',
+              ),
             ),
           ),
         ),
-      ),
-      const SizedBox(width: 12),
-      const Flexible(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'GBN Store',
-              style: TextStyle(
-                color: _ink,
-                fontSize: 23,
-                height: 1.25,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -.8,
-              ),
-            ),
-            SizedBox(height: 3),
-            Wrap(
-              spacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  'HRMS',
-                  style: TextStyle(
-                    color: _teal,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                Text(
-                  'Employee portal',
-                  style: TextStyle(color: _muted, fontSize: 9),
-                ),
-              ],
-            ),
-          ],
+        const SizedBox(height: 16),
+        const Text(
+          'Welcome back',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 26,
+            height: 1.25,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -.6,
+          ),
         ),
-      ),
-    ],
+        const SizedBox(height: 8),
+        const Text(
+          'Sign in to GBN Store',
+          style: TextStyle(color: _muted, fontSize: 14),
+        ),
+      ],
+    ),
   );
 }

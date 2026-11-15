@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_detail_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
@@ -32,27 +33,26 @@ class LeaveDetailView extends StatelessWidget {
       requestId: requestId.toString(),
       found: report != null,
       status: report?.status ?? '',
-      icon: Icons.event_available_outlined,
+      icon: LucideIcons.calendarCheck,
       reason: report?.reason ?? '',
-      rejectionReason:
-          rejectReason,
+      rejectionReason: rejectReason,
       fields: report == null
           ? []
           : [
               (
                 label: 'Employee ID',
                 value: report.userId,
-                icon: Icons.person_outline_rounded,
+                icon: LucideIcons.user,
               ),
               (
                 label: 'Start date',
                 value: DateTimeUtils.formatDate(report.startDate),
-                icon: Icons.calendar_today_outlined,
+                icon: LucideIcons.calendar,
               ),
               (
                 label: 'End date',
                 value: DateTimeUtils.formatDate(report.endDate),
-                icon: Icons.event_outlined,
+                icon: LucideIcons.calendar,
               ),
             ],
     );

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -25,6 +26,8 @@ Future<DateTime?> showAppDatePicker(
 
   return showDatePicker(
     context: context,
+    switchToInputEntryModeIcon: const Icon(LucideIcons.pencil),
+    switchToCalendarEntryModeIcon: const Icon(LucideIcons.calendar),
     initialDate: initialDate,
     firstDate: minimumDate,
     lastDate: maximumDate,

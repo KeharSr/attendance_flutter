@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'notification_inbox.dart';
+
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/core/error/failure.dart';
 import 'package:attendance_flutter/features/notifications/domain/entity/app_notification.dart';
@@ -73,13 +75,10 @@ class NotificationViewModel extends Notifier<NotificationState> {
             _onRegistration,
             onError: _onStreamError,
           ),
-          _repository.foregroundMessages.listen((message) {
-            if (!ref.mounted || !_active) return;
-            state = NotificationState(
-              foreground: message,
-              pendingTap: state.pendingTap,
-            );
-          }, onError: _onStreamError),
+          _repository.foregroundMessages.listen(
+            (message) => unawaited(_receiveForeground(message)),
+            onError: _onStreamError,
+          ),
           _repository.openedMessages.listen(handleTap, onError: _onStreamError),
         ]);
       }
@@ -91,6 +90,28 @@ class NotificationViewModel extends Notifier<NotificationState> {
         rethrow;
       }
     }();
+  }
+
+  Future<void> _receiveForeground(AppNotification message) async {
+    if (!ref.mounted ||
+        !ref.read(authSessionProvider) ||
+        ref.read(authViewModelProvider).isLoggingOut) {
+      return;
+    }
+    final version = _sessionVersion;
+    // Save before presentation, including messages received while Firebase
+    // initialization is still finishing for an already signed-in account.
+    await ref.read(notificationInboxProvider.notifier).record(message);
+    if (!ref.mounted ||
+        version != _sessionVersion ||
+        !ref.read(authSessionProvider) ||
+        ref.read(authViewModelProvider).isLoggingOut) {
+      return;
+    }
+    state = NotificationState(
+      foreground: message,
+      pendingTap: state.pendingTap,
+    );
   }
 
   Future<void> activate({bool requestPermission = true}) async {
@@ -140,6 +161,7 @@ class NotificationViewModel extends Notifier<NotificationState> {
   }
 
   Future<void> resume() async {
+    await ref.read(notificationInboxProvider.notifier).reload();
     _retryCount = 0;
     _retryTimer?.cancel();
     await activate(requestPermission: false);
@@ -232,8 +254,10 @@ class NotificationViewModel extends Notifier<NotificationState> {
   }
 
   void handleTap(AppNotification message) {
-    if (!ref.mounted || message.destination == null) return;
+    if (!ref.mounted) return;
     if (ref.read(authViewModelProvider).isLoggingOut) return;
+    unawaited(ref.read(notificationInboxProvider.notifier).record(message));
+    if (message.destination == null) return;
     state = NotificationState(
       foreground: state.foreground,
       pendingTap: message,

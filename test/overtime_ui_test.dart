@@ -24,6 +24,20 @@ class FakeOvertime extends OvertimeViewModel {
     submittedWorkDate = workDate;
     startTime = overtimeStartTime;
     endTime = overtimeEndTime;
+    state = state.copyWith(
+      successMessage: 'Overtime request submitted for review.',
+      overtime: [
+        OvertimeEntity(
+          id: 'new',
+          userId: '1',
+          workDate: workDate,
+          overtimeStartTime: overtimeStartTime,
+          overtimeEndTime: overtimeEndTime,
+          reason: reason,
+          status: 'pending',
+        ),
+      ],
+    );
   }
 
   String? editedId;
@@ -50,7 +64,7 @@ class FakeOvertime extends OvertimeViewModel {
 }
 
 void main() {
-  testWidgets('swiping to history fetches requests once', (tester) async {
+  testWidgets('request list loads on opening without tabs', (tester) async {
     final fake = FakeOvertime();
     await tester.pumpWidget(
       ProviderScope(
@@ -58,13 +72,11 @@ void main() {
         child: const MaterialApp(home: Scaffold(body: OvertimeView())),
       ),
     );
-    await tester.dragFrom(
-      tester.getTopLeft(find.byType(TabBarView)) + const Offset(600, 20),
-      const Offset(-550, 0),
-    );
+    expect(find.byType(TabBar), findsNothing);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     await tester.pumpAndSettle();
     expect(fake.fetches, 1);
-    expect(find.text('No overtime requests yet'), findsOneWidget);
+    expect(find.text('No overtime requests found'), findsOneWidget);
   });
 
   testWidgets('request requires a work date and both overtime times', (
@@ -76,6 +88,9 @@ void main() {
         child: const MaterialApp(home: Scaffold(body: OvertimeView())),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
     final scrollable = tester.state<ScrollableState>(
       find
           .descendant(
@@ -103,6 +118,9 @@ void main() {
           child: const MaterialApp(home: Scaffold(body: OvertimeView())),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
       fake.setWorkDate(DateTime(2026, 11, 1));
       await tester.pumpAndSettle();
       final fields = tester
@@ -134,6 +152,22 @@ void main() {
       expect(fake.submittedWorkDate, '2026-11-01');
       expect(fake.startTime, '18:00');
       expect(fake.endTime, '20:30');
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.text('Complete inventory review'), findsOneWidget);
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextFormField), findsNWidgets(4));
+      expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField).last)
+            .controller!
+            .text,
+        isEmpty,
+      );
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingActionButton), findsOneWidget);
     },
   );
 
@@ -148,8 +182,8 @@ void main() {
             home: Scaffold(
               body: EditOvertimeDialog(
                 request: OvertimeEntity(
-                  id: 7,
-                  userId: 1,
+                  id: "7",
+                  userId: "1",
                   workDate: '2026-11-01',
                   overtimeStartTime: '18:00:00',
                   overtimeEndTime: '20:30:00',
@@ -205,8 +239,8 @@ void main() {
               isLoading: false,
               requests: [
                 OvertimeEntity(
-                  id: 1,
-                  userId: 1,
+                  id: " 1",
+                  userId: "1",
                   workDate: '2026-11-01',
                   overtimeStartTime: '18:00:00',
                   overtimeEndTime: '20:30:00',

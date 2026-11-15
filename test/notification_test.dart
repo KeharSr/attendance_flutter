@@ -17,6 +17,7 @@ import 'package:attendance_flutter/features/notifications/data/repository/notifi
 import 'package:attendance_flutter/features/notifications/domain/entity/app_notification.dart';
 import 'package:attendance_flutter/features/notifications/domain/repository/notification_repository.dart';
 import 'package:attendance_flutter/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:attendance_flutter/features/notifications/presentation/view_model/view_model/notification_inbox.dart';
 import 'package:attendance_flutter/features/notifications/presentation/widgets/notification_listener.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
@@ -56,6 +57,7 @@ class _Repository implements INotificationRepository {
   bool failUnregister = false;
   String id = 'installation-a';
   AppNotification? initialMessage;
+  AppNotification? duringInitialization;
   Completer<void>? pendingRegister;
 
   @override
@@ -69,7 +71,13 @@ class _Repository implements INotificationRepository {
   @override
   List<String> get savedInstallationIds => List.of(ids);
   @override
-  Future<AppNotification?> initialize() async => initialMessage;
+  Future<AppNotification?> initialize() async {
+    if (duringInitialization != null) {
+      foregroundEvents.add(duringInitialization!);
+    }
+    return initialMessage;
+  }
+
   @override
   Future<bool> enable({required bool requestPermission}) async {
     calls.add('enable');
@@ -177,6 +185,86 @@ class _Adapter implements HttpClientAdapter {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'foreground delivery during signed-in startup is saved before presentation',
+    () async {
+      final repository = _Repository()
+        ..duringInitialization = const AppNotification(
+          id: 'startup-event',
+          title: 'Login successful',
+          body: 'Welcome to the HRMS app.',
+          type: 'login_success',
+        );
+      final container = await _container(repository);
+      await container
+          .read(sharedPreferencesProvider)
+          .setString(SharedPrefsKeys.userIdKey, 'employee-1');
+      final model = container.read(notificationViewModelProvider.notifier);
+      await model.start();
+      await container.read(notificationInboxProvider.notifier).reload();
+      expect(
+        container.read(notificationInboxProvider).requireValue.single.id,
+        'startup-event',
+      );
+      expect(
+        container.read(notificationViewModelProvider).foreground?.id,
+        'startup-event',
+      );
+    },
+  );
+
+  test(
+    'real pushes populate the inbox and resume imports background deliveries',
+    () async {
+      final repository = _Repository();
+      final container = await _container(repository);
+      final prefs = container.read(sharedPreferencesProvider);
+      await prefs.setString(SharedPrefsKeys.userIdKey, 'employee-1');
+      final model = container.read(notificationViewModelProvider.notifier);
+      await model.start();
+      final message = NotificationModel.fromRemoteMessage(
+        RemoteMessage(
+          messageId: 'firebase-login',
+          sentTime: DateTime.utc(2026, 11, 13),
+          notification: const RemoteNotification(
+            title: 'Login successful',
+            body: 'Welcome to the HRMS app.',
+          ),
+          data: const {
+            'type': 'login_success',
+            'eventId': 'login-event',
+            'entityId': 'session-1',
+            'status': 'success',
+          },
+        ),
+      );
+      repository.foregroundEvents.add(message);
+      await container.read(notificationInboxProvider.notifier).reload();
+      expect(
+        container.read(notificationInboxProvider).requireValue.single.id,
+        'login-event',
+      );
+      repository.openedEvents.add(message);
+      await container.read(notificationInboxProvider.notifier).reload();
+      expect(container.read(notificationInboxProvider).requireValue.length, 1);
+      // Simulate a background isolate writing through the same local store.
+      await NotificationLocalDataSource(preferences: prefs).saveNotification(
+        'employee-1',
+        AppNotification(
+          id: 'background-event',
+          title: 'Leave request approved',
+          type: 'leave_approved',
+          sentAt: DateTime.utc(2026, 11, 14),
+        ),
+      );
+      await model.resume();
+      expect(
+        container.read(notificationInboxProvider).requireValue.map((e) => e.id),
+        ['background-event', 'login-event'],
+      );
+    },
+  );
 
   for (final entry in {
     'leave': NotificationDestination.leave,
@@ -604,6 +692,7 @@ void main() {
     repository.foregroundEvents.add(
       const AppNotification(title: 'Clock out', type: 'clock_out'),
     );
+    await _flush();
     expect(
       container.read(notificationViewModelProvider).foreground?.title,
       'Clock out',

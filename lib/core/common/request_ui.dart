@@ -1,7 +1,9 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
+import 'package:attendance_flutter/core/common/empty_widget.dart';
 
 const requestInk = AppColors.ink;
 const requestMuted = AppColors.muted;
@@ -92,99 +94,6 @@ class RequestSubmitButton extends StatelessWidget {
       child: loading
           ? const AppLoadingIndicator(size: 20, strokeWidth: 2)
           : Text(label),
-    ),
-  );
-}
-
-class RequestTabs extends StatefulWidget {
-  const RequestTabs({
-    required this.request,
-    required this.history,
-    required this.onHistory,
-    super.key,
-  });
-  final Widget request;
-  final Widget history;
-  final VoidCallback onHistory;
-  @override
-  State<RequestTabs> createState() => _RequestTabsState();
-}
-
-class _RequestTabsState extends State<RequestTabs>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-  int _lastIndex = 0;
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this)
-      ..addListener(() {
-        if (_lastIndex == _tabs.index) return;
-        _lastIndex = _tabs.index;
-        if (_lastIndex == 1) widget.onHistory();
-      });
-  }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.topCenter,
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 680),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Container(
-              height: 46,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.skyPale,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabs,
-                dividerColor: Colors.transparent,
-                splashBorderRadius: BorderRadius.circular(9),
-                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicator: BoxDecoration(
-                  color: _surface,
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A101828),
-                      blurRadius: 4,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                ),
-                labelColor: requestAccent,
-                unselectedLabelColor: requestMuted,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                tabs: const [
-                  Tab(text: 'New request'),
-                  Tab(text: 'History'),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabs,
-              children: [widget.request, widget.history],
-            ),
-          ),
-        ],
-      ),
     ),
   );
 }
@@ -495,7 +404,7 @@ class RequestHistoryTile extends StatelessWidget {
                                       horizontal: 10,
                                     ),
                                     child: Icon(
-                                      Icons.arrow_forward_rounded,
+                                      LucideIcons.arrowRight,
                                       color: Color(0xFF7A88A4),
                                       size: 14,
                                     ),
@@ -533,7 +442,7 @@ class RequestHistoryTile extends StatelessWidget {
                     Expanded(
                       child: TextButton.icon(
                         onPressed: onView,
-                        icon: const Icon(Icons.visibility_outlined, size: 14),
+                        icon: const Icon(LucideIcons.eye, size: 14),
                         label: const Text('View'),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.accent,
@@ -544,7 +453,7 @@ class RequestHistoryTile extends StatelessWidget {
                     Expanded(
                       child: TextButton.icon(
                         onPressed: actionsEnabled ? onEdit : null,
-                        icon: const Icon(Icons.edit_outlined, size: 14),
+                        icon: const Icon(LucideIcons.pencil, size: 14),
                         label: const Text('Edit'),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.accent,
@@ -557,10 +466,7 @@ class RequestHistoryTile extends StatelessWidget {
                     Expanded(
                       child: TextButton.icon(
                         onPressed: actionsEnabled ? onDelete : null,
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          size: 14,
-                        ),
+                        icon: const Icon(LucideIcons.trash2, size: 14),
                         label: const Text('Delete'),
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFFD42621),
@@ -583,6 +489,7 @@ class RequestHistoryList extends StatelessWidget {
     required this.itemBuilder,
     required this.loading,
     required this.emptyText,
+    this.summary,
     this.error,
     this.onRefresh,
     super.key,
@@ -591,11 +498,36 @@ class RequestHistoryList extends StatelessWidget {
   final IndexedWidgetBuilder itemBuilder;
   final bool loading;
   final String emptyText;
+  final Widget? summary;
   final String? error;
   final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
+    if (!loading && count == 0 && error == null) {
+      final empty = CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          if (summary != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: summary,
+              ),
+            ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EmptyWidget(
+              message: emptyText,
+              description: 'Requests you submit will show up here.',
+            ),
+          ),
+        ],
+      );
+      return onRefresh == null
+          ? empty
+          : RefreshIndicator(onRefresh: onRefresh!, child: empty);
+    }
     final list = ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -610,6 +542,11 @@ class RequestHistoryList extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (summary != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: summary,
+              ),
             if (count > 0 || onRefresh != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -644,7 +581,7 @@ class RequestHistoryList extends StatelessWidget {
                         visualDensity: VisualDensity.compact,
                         onPressed: loading ? null : () => onRefresh!(),
                         icon: const Icon(
-                          Icons.refresh_rounded,
+                          LucideIcons.refreshCw,
                           size: 20,
                           color: requestMuted,
                         ),
@@ -673,7 +610,7 @@ class RequestHistoryList extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
-                      Icons.error_outline_rounded,
+                      LucideIcons.circleAlert,
                       color: AppColors.danger,
                       size: 22,
                     ),
@@ -718,45 +655,6 @@ class RequestHistoryList extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-            if (!loading && count == 0 && error == null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 56),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 72,
-                        width: 72,
-                        decoration: BoxDecoration(
-                          color: requestAccent.withValues(alpha: .08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.inbox_outlined,
-                          color: requestAccent,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        emptyText,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: requestInk,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Requests you submit will show up here.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: requestMuted, fontSize: 13),
-                      ),
-                    ],
-                  ),
                 ),
               ),
           ],

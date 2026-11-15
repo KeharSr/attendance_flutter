@@ -4,8 +4,8 @@ part 'attendance_model.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class AttendanceModel {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String checkIn;
   final String? checkOut;
   final String workDate;

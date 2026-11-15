@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 enum AppSnackBarType { success, error, warning, info }
@@ -148,22 +149,22 @@ abstract final class AppSnackBar {
       AppSnackBarType.success => _SnackBarAppearance(
         backgroundColor: const Color(0xFF166534),
         foregroundColor: colorScheme.onPrimary,
-        icon: Icons.check_circle_outline_rounded,
+        icon: LucideIcons.circleCheck,
       ),
       AppSnackBarType.error => _SnackBarAppearance(
         backgroundColor: colorScheme.error,
         foregroundColor: colorScheme.onError,
-        icon: Icons.error_outline_rounded,
+        icon: LucideIcons.circleAlert,
       ),
       AppSnackBarType.warning => _SnackBarAppearance(
         backgroundColor: const Color(0xFF92400E),
         foregroundColor: Colors.white,
-        icon: Icons.warning_amber_rounded,
+        icon: LucideIcons.triangleAlert,
       ),
       AppSnackBarType.info => _SnackBarAppearance(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        icon: Icons.info_outline_rounded,
+        icon: LucideIcons.info,
       ),
     };
   }

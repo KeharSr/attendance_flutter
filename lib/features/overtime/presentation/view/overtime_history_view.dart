@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/common/request_summary.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
 import 'package:attendance_flutter/features/overtime/presentation/widgets/overtime_history_card_widget.dart';
@@ -26,11 +27,18 @@ class OvertimeHistoryView extends StatelessWidget {
     final sorted = [...requests]
       ..sort((a, b) => b.workDate.compareTo(a.workDate));
     return RequestHistoryList(
+      summary: RequestSummary.hours(
+        entries: requests.map(
+          (request) => (status: request.status, duration: request.duration),
+        ),
+        loading: isLoading,
+        unavailable: errorMessage != null,
+      ),
       count: sorted.length,
       loading: isLoading,
       error: errorMessage,
       onRefresh: onRefresh,
-      emptyText: 'No overtime requests yet',
+      emptyText: 'No overtime requests found',
       itemBuilder: (context, index) => GestureDetector(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(

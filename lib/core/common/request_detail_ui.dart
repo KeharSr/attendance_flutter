@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -51,9 +52,9 @@ class RequestStatusBadge extends StatelessWidget {
       _ => AppColors.muted,
     };
     final icon = switch (normalized) {
-      'approved' => Icons.check_circle_outline_rounded,
-      'rejected' => Icons.highlight_off_rounded,
-      _ => Icons.schedule_rounded,
+      'approved' => LucideIcons.circleCheck,
+      'rejected' => LucideIcons.circleX,
+      _ => LucideIcons.clock,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -137,7 +138,6 @@ class RequestDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
     appBar: AppTopBar(title: '$title details', automaticallyImplyLeading: true),
     body: !found
         ? const Center(child: Text('Request not found.'))

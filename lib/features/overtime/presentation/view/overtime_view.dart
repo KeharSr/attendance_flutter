@@ -1,3 +1,5 @@
+import 'package:attendance_flutter/core/common/request_list_page.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
@@ -18,6 +20,9 @@ class OvertimeView extends ConsumerStatefulWidget {
 }
 
 class _OvertimeViewState extends ConsumerState<OvertimeView> {
+  final _pageKey = GlobalKey<RequestListPageState>();
+  BuildContext get _feedbackContext =>
+      _pageKey.currentState?.feedbackContext ?? context;
   final _formKey = GlobalKey<FormState>();
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
@@ -37,8 +42,9 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
     ref.listen(overtimeViewModelProvider, (previous, next) {
       if (previous?.successMessage != next.successMessage &&
           next.successMessage != null) {
-        AppSnackBar.success(context, next.successMessage!);
+        AppSnackBar.success(_feedbackContext, next.successMessage!);
         if (next.successMessage == 'Overtime request submitted for review.') {
+          _pageKey.currentState?.showHistory();
           _formKey.currentState?.reset();
           _startTimeController.clear();
           _endTimeController.clear();
@@ -48,12 +54,15 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
       }
       if (previous?.errorMessage != next.errorMessage &&
           next.errorMessage != null) {
-        AppSnackBar.error(context, next.errorMessage!);
+        AppSnackBar.error(_feedbackContext, next.errorMessage!);
       }
     });
 
-    return RequestTabs(
-      onHistory: () {
+    return RequestListPage(
+      key: _pageKey,
+      addLabel: 'Add overtime request',
+      loading: overtimeState.isLoading,
+      onLoad: () {
         if (!overtimeState.isLoading) {
           ref.read(overtimeViewModelProvider.notifier).getAllOvertimeRequest();
         }
@@ -157,6 +166,8 @@ class _RequestForm extends ConsumerWidget {
         ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
         : TimeOfDay.now();
     final selected = await showTimePicker(
+      switchToInputEntryModeIcon: const Icon(LucideIcons.keyboard),
+      switchToTimerEntryModeIcon: const Icon(LucideIcons.clock),
       context: context,
       initialTime: initial,
     );
@@ -191,7 +202,7 @@ class _RequestForm extends ConsumerWidget {
                     : DateTimeUtils.formatDate(state.workDate!),
                 decoration: requestInput(
                   'Choose a date',
-                  icon: Icons.calendar_today_outlined,
+                  icon: LucideIcons.calendar,
                 ),
                 validator: (_) =>
                     state.workDate == null ? 'Select a work date.' : null,
@@ -217,7 +228,7 @@ class _RequestForm extends ConsumerWidget {
                 enabled: !state.isLoading,
                 decoration: requestInput(
                   'Choose start time',
-                  icon: Icons.schedule_rounded,
+                  icon: LucideIcons.clock,
                 ),
                 onTap: () => _pickTime(context, startTimeController),
                 validator: (value) => value == null || value.isEmpty
@@ -232,7 +243,7 @@ class _RequestForm extends ConsumerWidget {
                 enabled: !state.isLoading,
                 decoration: requestInput(
                   'Choose end time',
-                  icon: Icons.schedule_rounded,
+                  icon: LucideIcons.clock,
                 ),
                 onTap: () => _pickTime(context, endTimeController),
                 validator: (value) {

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_detail_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
@@ -32,7 +33,7 @@ class OvertimeDetailView extends StatelessWidget {
       requestId: requestId.toString(),
       found: report != null,
       status: report?.status ?? '',
-      icon: Icons.more_time_rounded,
+      icon: LucideIcons.clockPlus,
       reason: report?.reason ?? '',
       rejectionReason: rejectReason,
       fields: report == null
@@ -41,24 +42,24 @@ class OvertimeDetailView extends StatelessWidget {
               (
                 label: 'Employee ID',
                 value: '${report.userId}',
-                icon: Icons.person_outline_rounded,
+                icon: LucideIcons.user,
               ),
               (
                 label: 'Work date',
                 value: DateTime.tryParse(report.workDate) == null
                     ? report.workDate
                     : DateTimeUtils.formatDate(DateTime.parse(report.workDate)),
-                icon: Icons.calendar_today_outlined,
+                icon: LucideIcons.calendar,
               ),
               (
                 label: 'Start time',
                 value: requestDisplayTime(report.overtimeStartTime),
-                icon: Icons.schedule_rounded,
+                icon: LucideIcons.clock,
               ),
               (
                 label: 'End time',
                 value: requestDisplayTime(report.overtimeEndTime),
-                icon: Icons.schedule_rounded,
+                icon: LucideIcons.clock,
               ),
             ],
     );

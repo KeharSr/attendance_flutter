@@ -142,7 +142,6 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('History'));
       await tester.pumpAndSettle();
       return backend;
     }
@@ -154,13 +153,13 @@ void main() {
         // Only the pending card has actions; the approved card has none.
         expect(find.text('Edit'), findsOneWidget);
         expect(find.text('Delete'), findsOneWidget);
-        await tester.tap(find.text('New request'));
+        await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextFormField).last,
           'An unfinished new request.',
         );
-        await tester.tap(find.text('History'));
+        await tester.tap(find.text('Back to requests'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Edit'));
         await tester.pumpAndSettle();
@@ -204,7 +203,7 @@ void main() {
           expect((mutation.data as Map)['requestedCheckIn'], '09:00');
           expect((mutation.data as Map)['requestedCheckOut'], '17:00');
         }
-        await tester.tap(find.text('New request'));
+        await tester.tap(find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
         expect(
           tester
@@ -227,7 +226,7 @@ void main() {
         await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
         expect(backend.mutations, isEmpty);
-        expect(find.byType(RequestHistoryTile), findsNWidgets(2));
+        expect(find.text('2 requests'), findsOneWidget);
         await tester.tap(find.text('Delete'));
         await tester.pumpAndSettle();
         await tester.tap(
@@ -245,7 +244,13 @@ void main() {
               : ApiEndpoints.deleteMissingAttendance('2'),
         );
         expect(find.byType(RequestHistoryTile), findsOneWidget);
-        expect(find.text('Approved'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(RequestHistoryTile),
+            matching: find.text('Approved'),
+          ),
+          findsOneWidget,
+        );
         expect(find.text('Edit'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
@@ -294,7 +299,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(RequestHistoryTile), findsNWidgets(2));
+      expect(find.text('2 requests'), findsOneWidget);
       expect(backend.mutations.length, 1);
       expect(
         find.text('Only pending requests can be edited or deleted'),
@@ -366,7 +371,6 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('History'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();
@@ -401,7 +405,6 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('History'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();

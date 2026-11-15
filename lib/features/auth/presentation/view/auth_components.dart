@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 const authNavy = Color(0xFF102A43);
@@ -32,11 +33,7 @@ class AttendanceBrandHeader extends StatelessWidget {
                   color: const Color(0xFFE8F1FF),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: const Icon(
-                  Icons.access_time_rounded,
-                  color: authBlue,
-                  size: 23,
-                ),
+                child: const Icon(LucideIcons.clock, color: authBlue, size: 23),
               ),
               const SizedBox(width: 11),
               const Text(

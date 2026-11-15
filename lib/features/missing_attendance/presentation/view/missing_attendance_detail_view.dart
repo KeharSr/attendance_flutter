@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_detail_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
@@ -28,7 +29,7 @@ class MissingAttendanceDetailView extends StatelessWidget {
       requestId: requestId.toString(),
       found: report != null,
       status: report?.status ?? '',
-      icon: Icons.pending_actions_rounded,
+      icon: LucideIcons.clipboardClock,
       reason: report?.reason ?? '',
       rejectionReason: report?.rejectReason ?? 'This is rejected',
       fields: report == null
@@ -37,7 +38,7 @@ class MissingAttendanceDetailView extends StatelessWidget {
               (
                 label: 'Employee ID',
                 value: '${report.userId}',
-                icon: Icons.person_outline_rounded,
+                icon: LucideIcons.user,
               ),
               (
                 label: 'Attendance date',
@@ -46,17 +47,17 @@ class MissingAttendanceDetailView extends StatelessWidget {
                     : DateTimeUtils.formatDate(
                         DateTime.parse(report.missingDate),
                       ),
-                icon: Icons.calendar_today_outlined,
+                icon: LucideIcons.calendar,
               ),
               (
                 label: 'Requested check-in',
                 value: requestDisplayTime(report.requestedCheckIn),
-                icon: Icons.schedule_rounded,
+                icon: LucideIcons.clock,
               ),
               (
                 label: 'Requested check-out',
                 value: requestDisplayTime(report.requestCheckOut),
-                icon: Icons.schedule_rounded,
+                icon: LucideIcons.clock,
               ),
             ],
     );

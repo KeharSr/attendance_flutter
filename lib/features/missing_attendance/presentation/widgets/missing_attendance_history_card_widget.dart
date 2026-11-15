@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
@@ -29,7 +30,7 @@ class MissingAttendanceHistoryCardWidget extends StatelessWidget {
         : requestDisplayTime(request.requestCheckOut);
     return RequestHistoryTile(
       typeLabel: 'Missing attendance',
-      icon: Icons.pending_actions_rounded,
+      icon: LucideIcons.clipboardClock,
       title: date == null
           ? request.missingDate
           : DateTimeUtils.formatDate(date),

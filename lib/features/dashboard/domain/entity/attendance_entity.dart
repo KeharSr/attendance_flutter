@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 class AttendanceEntity extends Equatable {
-  final int id;
-  final int userId;
+  final String id;
+  final String userId;
   final String checkIn;
   final String? checkout;
   final String workDate;

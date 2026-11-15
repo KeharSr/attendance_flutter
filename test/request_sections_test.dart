@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_view.dart';
 import 'package:attendance_flutter/features/leave/presentation/view_model/view_model/leave_view_model.dart';
@@ -40,6 +41,9 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
       await tester.tap(find.byType(TextFormField).first);
       await tester.pumpAndSettle();
       final today = DateUtils.dateOnly(DateTime.now());
@@ -48,7 +52,7 @@ void main() {
       );
       expect(picker.lastDate, today);
       expect(picker.firstDate.isAfter(today), isFalse);
-      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.tap(find.byIcon(LucideIcons.pencil));
       await tester.pumpAndSettle();
       final future = today.add(const Duration(days: 1));
       final field = find.descendant(
@@ -67,29 +71,38 @@ void main() {
     },
   );
 
-  testWidgets('leave and missing history tabs trigger their providers', (
-    tester,
-  ) async {
-    final leave = _Leave();
-    final missing = _Missing();
-    for (final view in [const LeaveView(), const MissingAttendanceView()]) {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            leaveViewModelProvider.overrideWith(() => leave),
-            missingAttendanceViewModelProvider.overrideWith(() => missing),
-          ],
-          child: MaterialApp(home: Scaffold(body: view)),
-        ),
-      );
-      await tester.tap(find.text('History').first);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-    }
-    expect(leave.fetches, 1);
-    expect(missing.fetches, 1);
-  });
+  testWidgets(
+    'leave and missing lists load immediately and Add opens their forms',
+    (tester) async {
+      final leave = _Leave();
+      final missing = _Missing();
+      for (final view in [const LeaveView(), const MissingAttendanceView()]) {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              leaveViewModelProvider.overrideWith(() => leave),
+              missingAttendanceViewModelProvider.overrideWith(() => missing),
+            ],
+            child: MaterialApp(home: Scaffold(body: view)),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(TabBar), findsNothing);
+        expect(find.byType(TextFormField), findsNothing);
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+        expect(find.byType(TextFormField), findsWidgets);
+        expect(find.byType(FloatingActionButton), findsNothing);
+        await tester.tap(find.text('Back to requests'));
+        await tester.pumpAndSettle();
+        expect(find.byType(FloatingActionButton), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+      expect(leave.fetches, 1);
+      expect(missing.fetches, 1);
+    },
+  );
   testWidgets('leave card displays the returned status at large text scale', (
     tester,
   ) async {

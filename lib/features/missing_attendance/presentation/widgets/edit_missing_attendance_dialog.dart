@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/app_date_field.dart';
 import 'package:attendance_flutter/core/common/app_date_picker.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
@@ -192,18 +193,20 @@ class _EditTimeField extends StatelessWidget {
         readOnly: true,
         enabled: enabled,
         initialValue: value?.format(context),
-        decoration: requestInput('Select time', icon: Icons.schedule_outlined)
+        decoration: requestInput('Select time', icon: LucideIcons.clock)
             .copyWith(
               suffixIcon: value == null
-                  ? const Icon(Icons.expand_more)
+                  ? const Icon(LucideIcons.chevronDown)
                   : IconButton(
                       tooltip: 'Clear $label',
                       onPressed: enabled ? () => onChanged(null) : null,
-                      icon: const Icon(Icons.close, size: 18),
+                      icon: const Icon(LucideIcons.x, size: 18),
                     ),
             ),
         onTap: () async {
           final time = await showTimePicker(
+            switchToInputEntryModeIcon: const Icon(LucideIcons.keyboard),
+            switchToTimerEntryModeIcon: const Icon(LucideIcons.clock),
             context: context,
             initialTime: value ?? initialTime,
           );
