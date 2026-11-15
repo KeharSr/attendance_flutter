@@ -11,7 +11,11 @@ class MissingAttendanceApiModel {
   final String requestCheckOut;
   final String reason;
   final String status;
-  final String? rejectReason;
+  final String? adminComment;
+  final String? overtimeApprovedStartTime;
+  final String? overtimeApprovedEndTime;
+  final num? overtimeRequestedHours;
+  final num? overtimeAcceptedHours;
 
   const MissingAttendanceApiModel({
     required this.id,
@@ -21,7 +25,11 @@ class MissingAttendanceApiModel {
     required this.requestCheckOut,
     required this.reason,
     required this.status,
-    this.rejectReason,
+    this.adminComment,
+    this.overtimeApprovedStartTime,
+    this.overtimeApprovedEndTime,
+    this.overtimeRequestedHours,
+    this.overtimeAcceptedHours,
   });
 
   factory MissingAttendanceApiModel.fromJson(Map<String, dynamic> json) {
@@ -35,7 +43,13 @@ class MissingAttendanceApiModel {
       ),
       reason: _parseString(json['reason']),
       status: _parseString(json['status'], fallback: 'Pending'),
-      rejectReason: _parseString(json['reject_reason']),
+      adminComment: _parseString(
+        json['admin_comment'] ?? json['reject_reason'],
+      ),
+      overtimeApprovedStartTime: json['overtime_approve_start_time'] as String?,
+      overtimeApprovedEndTime: json['overtime_approve_end_time'] as String?,
+      overtimeRequestedHours: json['overtime_requested_hours'] as num?,
+      overtimeAcceptedHours: json['overtime_accepted_hours'] as num?,
     );
   }
 
@@ -51,7 +65,7 @@ class MissingAttendanceApiModel {
       requestCheckOut: entity.requestCheckOut,
       reason: entity.reason,
       status: entity.status,
-      rejectReason: entity.rejectReason ?? '',
+      adminComment: entity.rejectReason ?? '',
     );
   }
 
@@ -65,7 +79,7 @@ class MissingAttendanceApiModel {
       requestCheckOut: requestCheckOut,
       reason: reason,
       status: status,
-      rejectReason: rejectReason,
+      rejectReason: adminComment,
     );
   }
 

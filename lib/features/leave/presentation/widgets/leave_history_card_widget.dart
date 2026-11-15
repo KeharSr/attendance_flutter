@@ -1,8 +1,7 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:attendance_flutter/core/common/request_ui.dart';
-import 'package:attendance_flutter/core/common/date_time_utils.dart';
-import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:attendance_flutter/core/common/styled_request_ui.dart';
+import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
 
 class LeaveHistoryCardWidget extends StatelessWidget {
   const LeaveHistoryCardWidget({
@@ -13,25 +12,37 @@ class LeaveHistoryCardWidget extends StatelessWidget {
     super.key,
   });
   final LeaveEntity request;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final VoidCallback? onEdit, onDelete;
   final bool actionsEnabled;
+
   @override
-  Widget build(BuildContext context) {
-    return RequestHistoryTile(
-      typeLabel: 'Leave request',
-      icon: LucideIcons.calendarCheck,
-      title: DateTimeUtils.formatDate(request.startDate),
-      detail: 'Leave request',
-      startLabel: 'From',
-      endLabel: 'To',
-      startValue: DateTimeUtils.formatDate(request.startDate),
-      endValue: DateTimeUtils.formatDate(request.endDate),
-      reason: request.reason,
-      status: request.status,
-      onEdit: onEdit,
-      onDelete: onDelete,
-      actionsEnabled: actionsEnabled,
-    );
-  }
+  Widget build(BuildContext context) => StyledRequestCard(
+    title: styledRequestDate(request.startDate.toIso8601String()),
+    reason: request.reason,
+    status: request.status,
+    icon: LucideIcons.calendarCheck,
+    onEdit: onEdit,
+    onDelete: onDelete,
+    actionsEnabled: actionsEnabled,
+    metrics: RequestMetricPair(
+      first: RequestMetric(
+        label: 'From',
+        value: styledRequestDate(request.startDate.toIso8601String()),
+        icon: LucideIcons.calendar,
+        boxed: false,
+      ),
+      second: RequestMetric(
+        label: 'To',
+        value: styledRequestDate(request.endDate.toIso8601String()),
+        icon: LucideIcons.calendar,
+        boxed: false,
+      ),
+    ),
+    summary: RequestMetric(
+      label: 'Requested Days',
+      value: leaveDaysLabel(request.startDate, request.endDate),
+      icon: LucideIcons.hourglass,
+      boxed: false,
+    ),
+  );
 }

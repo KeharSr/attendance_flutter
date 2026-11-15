@@ -1,3 +1,10 @@
+import 'package:attendance_flutter/core/common/styled_request_ui.dart';
+import 'package:attendance_flutter/features/leave/presentation/view/leave_history_view.dart';
+import 'package:attendance_flutter/features/leave/presentation/view/leave_detail_view.dart';
+import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/view/missing_attendance_history_view.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/view/missing_attendance_detail_view.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/missing_attendance_history_card_widget.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_view.dart';
@@ -28,6 +35,108 @@ class _Missing extends MissingAttendanceViewModel {
 }
 
 void main() {
+  test(
+    'leave days count calendar dates inclusively across month boundaries',
+    () {
+      expect(
+        leaveDaysLabel(DateTime(2026, 11, 30), DateTime(2026, 12, 2)),
+        '3 days',
+      );
+      expect(
+        leaveDaysLabel(DateTime(2026, 11, 30), DateTime(2026, 11, 30)),
+        '1 day',
+      );
+    },
+  );
+
+  testWidgets('leave and attendance cards open matching detail pages', (
+    tester,
+  ) async {
+    final leave = LeaveEntity(
+      id: 'leave',
+      userId: '1',
+      startDate: DateTime(2026, 11, 11),
+      endDate: DateTime(2026, 11, 12),
+      reason: 'Family event',
+      status: 'approved',
+    );
+    const missing = MissingAttendanceEntity(
+      id: 'missing',
+      userId: '1',
+      missingDate: '2026-11-11',
+      requestedCheckIn: '08:00:00',
+      requestCheckOut: '',
+      reason: 'Forgot check-in',
+      status: 'pending',
+    );
+    for (final history in [
+      LeaveHistoryView(requests: [leave], isLoading: false),
+      const MissingAttendanceHistoryView(requests: [missing], isLoading: false),
+    ]) {
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: history)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(StyledRequestCard));
+      await tester.pumpAndSettle();
+      expect(find.text('Employee Request'), findsOneWidget);
+      expect(find.text('Administrator Approval'), findsOneWidget);
+      if (history is LeaveHistoryView) {
+        expect(find.byType(LeaveDetailView), findsOneWidget);
+        expect(find.text('2 days'), findsOneWidget);
+      } else {
+        expect(find.byType(MissingAttendanceDetailView), findsOneWidget);
+        expect(find.text('Not requested'), findsOneWidget);
+        expect(find.text('1 update'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets(
+    'missing card supports enlarged text and disables pending actions while loading',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      var edits = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.8)),
+            child: Scaffold(
+              body: ListView(
+                children: [
+                  MissingAttendanceHistoryCardWidget(
+                    request: const MissingAttendanceEntity(
+                      id: '1',
+                      userId: '1',
+                      missingDate: '2026-11-11',
+                      requestedCheckIn: '',
+                      requestCheckOut: '17:00:00',
+                      reason: 'Forgot to record check-out after completing the shift.',
+                      status: 'pending',
+                    ),
+                    actionsEnabled: false,
+                    onEdit: () => edits++,
+                    onDelete: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('1 update'), findsOneWidget);
+      expect(find.text('Not requested'), findsOneWidget);
+      await tester.ensureVisible(find.text('Edit'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
+      expect(edits, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'missing attendance calendar ends today and rejects future text input',
     (tester) async {

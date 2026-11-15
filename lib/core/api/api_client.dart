@@ -318,7 +318,7 @@ class _AuthInterceptor extends Interceptor {
         final refresh = data is Map ? data['refreshToken'] : null;
         if (access is! String ||
             access.isEmpty ||
-            refresh is! String ||  
+            refresh is! String ||
             refresh.isEmpty) {
           throw const FormatException(
             'Login response is missing authentication tokens.',

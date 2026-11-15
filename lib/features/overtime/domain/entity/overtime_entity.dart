@@ -8,7 +8,13 @@ class OvertimeEntity extends Equatable {
   final String workDate;
   final String reason;
   final String status;
-  final String? rejectReason;
+  final String? overtimeApproveStartTime;
+  final String? overtimeApproveEndTime;
+  final double? overtimeRequestedHours;
+  final double? overtimeAcceptedHours;
+  final String? adminComment;
+  final String? createdAt;
+  final String? updatedAt;
 
   const OvertimeEntity({
     required this.id,
@@ -18,10 +24,16 @@ class OvertimeEntity extends Equatable {
     this.workDate = '',
     required this.reason,
     required this.status,
-    this.rejectReason,
+    this.overtimeApproveStartTime,
+    this.overtimeApproveEndTime,
+    this.overtimeRequestedHours,
+    this.overtimeAcceptedHours,
+    this.adminComment,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  /// Duration of a valid same-day overtime interval returned by the API.
+  /// Requested hours from the API, falling back to the same-day time interval.
   Duration? get duration {
     int? secondsOfDay(String? value) {
       final match = RegExp(r'^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$')
@@ -34,6 +46,14 @@ class OvertimeEntity extends Equatable {
       return hour * 3600 + minute * 60 + second;
     }
 
+    if (overtimeRequestedHours != null &&
+        overtimeRequestedHours! >= 0 &&
+        overtimeRequestedHours!.isFinite) {
+      return Duration(
+        microseconds: (overtimeRequestedHours! * Duration.microsecondsPerHour)
+            .round(),
+      );
+    }
     final start = secondsOfDay(overtimeStartTime);
     final end = secondsOfDay(overtimeEndTime);
     if (start == null || end == null || end <= start) return null;
@@ -49,6 +69,12 @@ class OvertimeEntity extends Equatable {
     workDate,
     reason,
     status,
-    rejectReason,
+    overtimeApproveStartTime,
+    overtimeApproveEndTime,
+    overtimeRequestedHours,
+    overtimeAcceptedHours,
+    adminComment,
+    createdAt,
+    updatedAt,
   ];
 }

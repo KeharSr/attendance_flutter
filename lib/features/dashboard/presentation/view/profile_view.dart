@@ -95,12 +95,6 @@ class ProfileView extends ConsumerWidget {
                         ? 'Not provided'
                         : phone,
                   ),
-                  const SizedBox(height: 22),
-                  _ProfileDetail(
-                    icon: LucideIcons.idCard,
-                    label: 'Employee ID',
-                    value: id == null || id.isEmpty ? 'Not provided' : id,
-                  ),
                 ],
               ),
             ),

@@ -1,3 +1,7 @@
+import 'package:attendance_flutter/features/overtime/presentation/widgets/overtime_history_card_widget.dart';
+import 'package:attendance_flutter/features/overtime/presentation/widgets/overtime_ui.dart';
+import 'package:attendance_flutter/features/overtime/data/model/overtime_api_model.dart';
+import 'package:attendance_flutter/features/overtime/presentation/view/overtime_detail_view.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view/overtime_view.dart';
@@ -64,6 +68,109 @@ class FakeOvertime extends OvertimeViewModel {
 }
 
 void main() {
+  test('approval metadata survives API and entity conversion', () {
+    final model = OvertimeApiModel.fromJson({
+      'id': '7',
+      'user_id': '1',
+      'work_date': '2026-11-11',
+      'reason': 'Need to work',
+      'status': 'approved',
+      'overtime_start_time': '08:00:00',
+      'overtime_end_time': '10:00:00',
+      'overtime_approve_start_time': '08:00:00',
+      'overtime_approve_end_time': '09:00:00',
+      'overtime_requested_hours': 2,
+      'overtime_accepted_hours': 1,
+      'admin_comment': 'okay this is it',
+      'created_at': '2026-11-15T06:54:00',
+      'updated_at': '2026-11-15T07:06:00',
+    });
+    final restored = OvertimeApiModel.fromEntity(model.toEntity()).toJson();
+    expect(restored['overtime_approve_end_time'], '09:00:00');
+    expect(restored['overtime_requested_hours'], 2);
+    expect(restored['overtime_accepted_hours'], 1);
+    expect(model.toEntity().overtimeAcceptedHours, 1);
+    expect(restored['admin_comment'], 'okay this is it');
+    expect(restored['created_at'], '2026-11-15T06:54:00');
+  });
+
+  test('hours use API totals and support fractional and zero hours', () {
+    expect(overtimeHours('08:00', '10:00', hours: 1.5), '1.5 hours');
+    expect(overtimeHours(null, null, hours: 0), '0 hours');
+    expect(overtimeHours(null, null, hours: 1), '1 hour');
+    expect(overtimeHours('08:00', '10:00'), '2 hours');
+  });
+
+  testWidgets('API response fills the card and detail approval fields', (
+    tester,
+  ) async {
+    final request = OvertimeApiModel.fromJson({
+      'id': '7',
+      'user_id': '1',
+      'work_date': '2026-11-11T18:15:00.000Z',
+      'reason': 'Need to work',
+      'status': 'approved',
+      'overtime_start_time': '08:00:00',
+      'overtime_end_time': '10:00:00',
+      'overtime_approve_start_time': '08:00:00',
+      'overtime_approve_end_time': '09:00:00',
+      'overtime_requested_hours': 2.5,
+      'overtime_accepted_hours': 0.5,
+      'admin_comment': 'okay this is it',
+      'created_at': '2026-11-15T06:54:00.424Z',
+      'updated_at': '2026-11-15T07:06:35.272Z',
+    }).toEntity();
+    for (final page in [
+      Scaffold(body: OvertimeHistoryCardWidget(request: request)),
+      OvertimeDetailView(requestId: '7', requests: [request]),
+    ]) {
+      await tester.pumpWidget(MaterialApp(home: page));
+      expect(find.text('2.5 hours'), findsOneWidget);
+      expect(find.text('0.5 hours'), findsOneWidget);
+      expect(find.text('Not provided'), findsNothing);
+      if (page is OvertimeDetailView) {
+        expect(find.text('okay this is it'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('details distinguish requested and accepted hours', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: OvertimeDetailView(
+          requestId: '7',
+          requests: [
+            OvertimeEntity(
+              id: '7',
+              userId: '1',
+              workDate: '2026-11-11',
+              reason: 'Need to work',
+              status: 'approved',
+              overtimeStartTime: '08:00:00',
+              overtimeEndTime: '10:00:00',
+              overtimeApproveStartTime: '08:00:00',
+              overtimeApproveEndTime: '09:00:00',
+              adminComment: 'okay this is it',
+            ),
+          ],
+        ),
+      ),
+    );
+    expect(find.text('Employee Request'), findsOneWidget);
+    expect(find.text('Administrator Approval'), findsOneWidget);
+    expect(find.text('2 hours'), findsOneWidget);
+    expect(find.text('1 hour'), findsOneWidget);
+    expect(find.text('okay this is it'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('request list loads on opening without tabs', (tester) async {
     final fake = FakeOvertime();
     await tester.pumpWidget(

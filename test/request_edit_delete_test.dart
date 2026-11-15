@@ -4,7 +4,8 @@ import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
-import 'package:attendance_flutter/core/common/request_ui.dart';
+import 'package:attendance_flutter/core/common/styled_request_ui.dart'
+    show StyledRequestCard;
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_view.dart';
 import 'package:attendance_flutter/features/leave/presentation/widgets/edit_leave_dialog.dart';
@@ -243,10 +244,10 @@ void main() {
               ? ApiEndpoints.deleteLeave('1')
               : ApiEndpoints.deleteMissingAttendance('2'),
         );
-        expect(find.byType(RequestHistoryTile), findsOneWidget);
+        expect(find.byType(StyledRequestCard), findsOneWidget);
         expect(
           find.descendant(
-            of: find.byType(RequestHistoryTile),
+            of: find.byType(StyledRequestCard),
             matching: find.text('Approved'),
           ),
           findsOneWidget,
@@ -318,6 +319,7 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         await mount(tester, textScale: 1.8);
         await tester.ensureVisible(find.text('Edit'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Edit'));
         await tester.pumpAndSettle();
         expect(find.byType(dialogType), findsOneWidget);

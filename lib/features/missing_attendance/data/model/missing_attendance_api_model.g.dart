@@ -16,7 +16,7 @@ MissingAttendanceApiModel _$MissingAttendanceApiModelFromJson(
   requestCheckOut: json['request_check_out'] as String,
   reason: json['reason'] as String,
   status: json['status'] as String,
-  rejectReason: json['reject_reason'] as String?,
+  adminComment: json['admin_comment'] as String?,
 );
 
 Map<String, dynamic> _$MissingAttendanceApiModelToJson(
@@ -29,5 +29,5 @@ Map<String, dynamic> _$MissingAttendanceApiModelToJson(
   'request_check_out': instance.requestCheckOut,
   'reason': instance.reason,
   'status': instance.status,
-  'reject_reason': instance.rejectReason,
+  'admin_comment': instance.adminComment,
 };

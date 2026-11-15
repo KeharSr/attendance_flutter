@@ -11,7 +11,13 @@ class OvertimeApiModel {
   final String workDate;
   final String reason;
   final String status;
-  final String? rejectReason;
+  final String? overtimeApproveStartTime;
+  final String? overtimeApproveEndTime;
+  final double? overtimeRequestedHours;
+  final double? overtimeAcceptedHours;
+  final String? adminComment;
+  final String? createdAt;
+  final String? updatedAt;
 
   OvertimeApiModel({
     required this.id,
@@ -21,7 +27,13 @@ class OvertimeApiModel {
     this.workDate = '',
     required this.reason,
     required this.status,
-    this.rejectReason,
+    this.overtimeApproveStartTime,
+    this.overtimeApproveEndTime,
+    this.overtimeRequestedHours,
+    this.overtimeAcceptedHours,
+    this.adminComment,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory OvertimeApiModel.fromJson(Map<String, dynamic> json) =>
@@ -39,7 +51,13 @@ class OvertimeApiModel {
       workDate: entity.workDate,
       reason: entity.reason,
       status: entity.status,
-      rejectReason: entity.rejectReason ?? '',
+      overtimeApproveStartTime: entity.overtimeApproveStartTime,
+      overtimeApproveEndTime: entity.overtimeApproveEndTime,
+      overtimeRequestedHours: entity.overtimeRequestedHours,
+      overtimeAcceptedHours: entity.overtimeAcceptedHours,
+      adminComment: entity.adminComment,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 
@@ -53,7 +71,13 @@ class OvertimeApiModel {
       workDate: workDate,
       reason: reason,
       status: status,
-      rejectReason: rejectReason,
+      overtimeApproveStartTime: overtimeApproveStartTime,
+      overtimeApproveEndTime: overtimeApproveEndTime,
+      overtimeRequestedHours: overtimeRequestedHours,
+      overtimeAcceptedHours: overtimeAcceptedHours,
+      adminComment: adminComment,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 

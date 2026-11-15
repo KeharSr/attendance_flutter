@@ -31,85 +31,87 @@ void main() {
   );
 
   for (final status in ['approved', 'pending', 'rejected']) {
-    testWidgets(
-      'all detail pages show rejection feedback only for rejected requests: $status',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 900);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        final pages = [
-          LeaveDetailView(
-            requestId: '1',
-            requests: [
-              LeaveEntity(
-                id: '1',
-                userId: '2',
-                startDate: DateTime(2026, 11, 12),
-                endDate: DateTime(2026, 11, 14),
-                reason: 'Family commitment',
-                status: status,
-                rejectionReason: 'Please confirm the dates.',
-              ),
-            ],
-          ),
-          OvertimeDetailView(
-            requestId: 1,
-            requests: [
-              OvertimeEntity(
-                id: 1,
-                userId: 2,
-                workDate: '2026-11-12',
-                overtimeStartTime: '18:00',
-                overtimeEndTime: '20:30:00',
-                reason: 'Complete inventory review',
-                status: status,
-                rejectReason: 'Please confirm the dates.',
-              ),
-            ],
-          ),
-          MissingAttendanceDetailView(
-            requestId: 1,
-            requests: [
-              MissingAttendanceEntity(
-                id: 1,
-                userId: 2,
-                missingDate: '2026-11-12',
-                requestedCheckIn: '09:00:00',
-                requestCheckOut: '',
-                reason: 'Check-in was not recorded',
-                status: status,
-                rejectReason: 'Please confirm the dates.',
-              ),
-            ],
-          ),
-        ];
-        for (final page in pages) {
-          await tester.pumpWidget(
-            MaterialApp(
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(1.8)),
-                child: child!,
-              ),
-              home: page,
+    testWidgets('detail pages show administrator feedback: $status', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final pages = [
+        LeaveDetailView(
+          requestId: '1',
+          requests: [
+            LeaveEntity(
+              id: '1',
+              userId: '2',
+              startDate: DateTime(2026, 11, 12),
+              endDate: DateTime(2026, 11, 14),
+              reason: 'Family commitment',
+              status: status,
+              rejectionReason: 'Please confirm the dates.',
             ),
-          );
-          await tester.pumpAndSettle();
-          final feedback = find.text('Rejection reason');
-          expect(
-            feedback,
-            status == 'rejected' ? findsOneWidget : findsNothing,
-          );
-          await tester.drag(
-            find.byType(SingleChildScrollView),
-            const Offset(0, -1800),
-          );
-          await tester.pumpAndSettle();
-          expect(tester.takeException(), isNull);
-          await tester.pumpWidget(const SizedBox.shrink());
-        }
-      },
-    );
+          ],
+        ),
+        OvertimeDetailView(
+          requestId: '1',
+          requests: [
+            OvertimeEntity(
+              id: '1',
+              userId: '2',
+              workDate: '2026-11-12',
+              overtimeStartTime: '18:00',
+              overtimeEndTime: '20:30:00',
+              reason: 'Complete inventory review',
+              status: status,
+              adminComment: 'Please confirm the dates.',
+            ),
+          ],
+        ),
+        MissingAttendanceDetailView(
+          requestId: '1',
+          requests: [
+            MissingAttendanceEntity(
+              id: '1',
+              userId: '2',
+              missingDate: '2026-11-12',
+              requestedCheckIn: '09:00:00',
+              requestCheckOut: '',
+              reason: 'Check-in was not recorded',
+              status: status,
+              rejectReason: 'Please confirm the dates.',
+            ),
+          ],
+        ),
+      ];
+      for (final page in pages) {
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(1.8)),
+              child: child!,
+            ),
+            home: page,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final overtime = page is OvertimeDetailView;
+        final feedback = find.text(
+          overtime ? 'Admin Comment' : 'Rejection reason',
+        );
+        expect(
+          feedback,
+          overtime || status == 'rejected' ? findsOneWidget : findsNothing,
+        );
+        await tester.drag(
+          find.byType(SingleChildScrollView),
+          const Offset(0, -1800),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    });
   }
 }

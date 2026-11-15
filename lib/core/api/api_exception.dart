@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiException implements Exception {
   const ApiException({
@@ -42,5 +43,6 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() =>
+      kDebugMode ? 'ApiException($statusCode): $message' : message;
 }
