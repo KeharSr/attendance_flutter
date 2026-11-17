@@ -42,12 +42,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA2PjNGZ2WCH8iT9OzKQu6nD1CpCTJ02Qw',
-    appId: '1:676508827520:android:748368fb2e3a04a0a84b65',
+    appId: '1:676508827520:android:708c03cb4c76602da84b65',
     messagingSenderId: '676508827520',
     projectId: 'attendance-flutter-1b9ea',
     storageBucket: 'attendance-flutter-1b9ea.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCMCbY9mKqfOG7R7MSpuu1jCTrUqcQZx2I',
     appId: '1:676508827520:ios:ffb5a65a6318fa55a84b65',
@@ -56,7 +55,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'attendance-flutter-1b9ea.firebasestorage.app',
     iosBundleId: 'com.kehar.attendanceFlutter',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCMCbY9mKqfOG7R7MSpuu1jCTrUqcQZx2I',
     appId: '1:676508827520:ios:ffb5a65a6318fa55a84b65',
