@@ -104,7 +104,7 @@ class AuthViewModel extends Notifier<AuthState> {
     );
     final notifications = ref.read(notificationViewModelProvider.notifier);
     final detached = await notifications.prepareLogout();
-    if (!ref.mounted) return;
+    if (!ref.mounted || !ref.read(authSessionProvider)) return;
     final detachFailure = detached.fold((failure) => failure, (_) => null);
     if (detachFailure != null) {
       state = state.copyWith(
@@ -115,7 +115,7 @@ class AuthViewModel extends Notifier<AuthState> {
       return;
     }
     final result = await ref.read(logoutUserUsecaseProvider).call();
-    if (!ref.mounted) return;
+    if (!ref.mounted || !ref.read(authSessionProvider)) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -125,14 +125,24 @@ class AuthViewModel extends Notifier<AuthState> {
         unawaited(notifications.activate(requestPermission: false));
       },
       (message) {
-        state = AuthState.initial().copyWith(logoutMessage: message);
-        ref.read(authSessionProvider.notifier).markLoggedOut();
-        ref.invalidate(attendanceViewModelProvider);
-        ref.invalidate(leaveViewModelProvider);
-        ref.invalidate(overtimeViewModelProvider);
-        ref.invalidate(missingAttendanceViewModelProvider);
-        ref.invalidate(dashboardNavigationProvider);
+        _completeLogout(message);
       },
     );
+  }
+
+  Future<void> expireSession() async {
+    await ref.read(appSharedPrefsProvider).removeSession();
+    if (!ref.mounted) return;
+    _completeLogout('Your session has expired. Please sign in again.');
+  }
+
+  void _completeLogout(String message) {
+    state = AuthState.initial().copyWith(logoutMessage: message);
+    ref.read(authSessionProvider.notifier).markLoggedOut();
+    ref.invalidate(attendanceViewModelProvider);
+    ref.invalidate(leaveViewModelProvider);
+    ref.invalidate(overtimeViewModelProvider);
+    ref.invalidate(missingAttendanceViewModelProvider);
+    ref.invalidate(dashboardNavigationProvider);
   }
 }

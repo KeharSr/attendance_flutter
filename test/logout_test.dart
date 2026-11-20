@@ -46,7 +46,7 @@ class _Backend {
   Completer<void>? pendingLogout;
   Completer<void>? pendingRefresh;
 
-  _Backend() {
+  _Backend({Future<void> Function()? onSessionExpired}) {
     Dio createDio() {
       final dio = Dio(
         BaseOptions(
@@ -61,7 +61,11 @@ class _Backend {
       return dio;
     }
 
-    client = ApiClient(dio: createDio(), refreshDio: createDio());
+    client = ApiClient(
+      dio: createDio(),
+      refreshDio: createDio(),
+      onSessionExpired: onSessionExpired,
+    );
     client.dio.interceptors.removeWhere(
       (interceptor) => interceptor is PrettyDioLogger,
     );
@@ -285,6 +289,68 @@ void main() {
       expect(await backend.client.getRefreshToken(), isNull);
     },
   );
+
+  for (final scenario in [
+    'missing tokens',
+    'rejected refresh',
+    'rejected retry',
+  ]) {
+    testWidgets('notification 401 logs out after $scenario', (tester) async {
+      FlutterSecureStorage.setMockInitialValues(
+        scenario == 'missing tokens'
+            ? {}
+            : {
+                'auth_token': 'access-expired',
+                'auth_refresh_token': 'refresh-valid',
+              },
+      );
+      final prefs = await _prefs();
+      late ProviderContainer container;
+      var expirations = 0;
+      final backend =
+          _Backend(
+              onSessionExpired: () async {
+                expirations++;
+                await container
+                    .read(authViewModelProvider.notifier)
+                    .expireSession();
+              },
+            )
+            ..rejectRefresh = scenario == 'rejected refresh'
+            ..rejectAllProtected = scenario == 'rejected retry';
+      container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          apiClientProvider.overrideWithValue(backend.client),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: container, child: const App()),
+      );
+      // Send the registration before dashboard startup to isolate the failure.
+      final registration = backend.client
+          .post<dynamic>(ApiEndpoints.registerDevice)
+          .then<Object?>((_) => null, onError: (Object error) => error);
+      await tester.pumpAndSettle();
+      expect(await registration, isA<Exception>());
+      await tester.pump(const Duration(milliseconds: 2400));
+      await tester.pumpAndSettle();
+      expect(expirations, 1);
+      expect(find.byType(LoginView), findsOneWidget);
+      expect(find.byType(DashboardView), findsNothing);
+      expect(
+        find.text('Your session has expired. Please sign in again.'),
+        findsOneWidget,
+      );
+      expect(container.read(authSessionProvider), isFalse);
+      expect(prefs.getBool(SharedPrefsKeys.isUserLoggedIn), isNull);
+      expect(prefs.getString(SharedPrefsKeys.userIdKey), isNull);
+      expect(await backend.client.getAccessToken(), isNull);
+      expect(await backend.client.getRefreshToken(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets(
     'login and API logout use the root auth flow and show the logout message on Login',

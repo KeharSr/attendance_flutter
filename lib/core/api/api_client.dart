@@ -1,4 +1,3 @@
-import 'package:attendance_flutter/core/navigator/global_navigator.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
@@ -13,7 +12,11 @@ class ApiClient {
   final _secureToken = _SecureStorage();
   late final _AuthInterceptor _authInterceptor;
 
-  ApiClient({Dio? dio, Dio? refreshDio}) {
+  ApiClient({
+    Dio? dio,
+    Dio? refreshDio,
+    Future<void> Function()? onSessionExpired,
+  }) {
     _dio =
         dio ??
         Dio(
@@ -33,6 +36,7 @@ class ApiClient {
       dio: _dio,
       refreshDio: refreshDio ?? Dio(_dio.options.copyWith()),
       storage: _secureToken,
+      onSessionExpired: onSessionExpired,
     );
     _dio.interceptors.add(_authInterceptor);
 
@@ -237,11 +241,13 @@ class _AuthInterceptor extends Interceptor {
     required this._dio,
     required this._refreshDio,
     required this._storage,
+    this.onSessionExpired,
   });
 
   final Dio _dio;
   final Dio _refreshDio;
   final _SecureStorage _storage;
+  final Future<void> Function()? onSessionExpired;
   Future<bool>? _refreshFuture;
   int? _refreshVersion;
   int _sessionVersion = 0;
@@ -269,6 +275,16 @@ class _AuthInterceptor extends Interceptor {
     final version = ++_sessionVersion;
     return _write(() async {
       if (version == _sessionVersion) await _storage.clearTokens();
+    });
+  }
+
+  Future<void> _expireSession(int version) {
+    if (version != _sessionVersion) return Future<void>.value();
+    final expiredVersion = ++_sessionVersion;
+    return _write(() async {
+      if (expiredVersion != _sessionVersion) return;
+      await _storage.clearTokens();
+      if (expiredVersion == _sessionVersion) await onSessionExpired?.call();
     });
   }
 
@@ -360,7 +376,7 @@ class _AuthInterceptor extends Interceptor {
       return;
     }
     if (request.extra[_retryKey] == true) {
-      await clearTokens();
+      await _expireSession(version);
       handler.next(error);
       return;
     }
@@ -372,10 +388,11 @@ class _AuthInterceptor extends Interceptor {
       }
       // A delayed 401 may refer to the token another request already replaced.
       if (current == null ||
+          current.isEmpty ||
           request.headers['Authorization'] == 'Bearer $current') {
         final refreshed = await _refreshToken(version);
         if (!refreshed) {
-          if (version == _sessionVersion) await clearTokens();
+          await _expireSession(version);
           handler.next(error);
           return;
         }
@@ -385,9 +402,9 @@ class _AuthInterceptor extends Interceptor {
         return;
       }
       final token = await _storage.getAccessToken();
-      if (token == null) {
+      if (token == null || token.isEmpty) {
+        await _expireSession(version);
         handler.next(error);
-        navigateToLogin();
         return;
       }
       final response = await _dio.fetch<dynamic>(

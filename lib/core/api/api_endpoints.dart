@@ -1,7 +1,7 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const String baseUrl = 'http://192.168.18.77:5000/api/v1';
+  static const String baseUrl = 'https://api.hrms.gadgetbyte.com.np/api/v1';
 
   static const String createUser = "$baseUrl/users/createUser";
 

@@ -75,7 +75,12 @@ final authSessionProvider = NotifierProvider<AuthSessionNotifier, bool>(
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  return ApiClient(
+    onSessionExpired: () async {
+      if (!ref.mounted) return;
+      await ref.read(authViewModelProvider.notifier).expireSession();
+    },
+  );
 });
 
 final authDataSourceProvider = Provider<AuthDataSource>((ref) {
