@@ -62,5 +62,4 @@ flutter:
           weight: 800
 
   assets:
-    - assets/images/gadgetbyte_logo.jpg
-    - assets/images/man.png
+    - assets/images/

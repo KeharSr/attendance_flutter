@@ -349,10 +349,10 @@ class _BrandHeader extends StatelessWidget {
               maxWidth: 122,
               maxHeight: 122,
               child: Image.asset(
-                'assets/images/gadgetbyte_logo.jpg',
+                'assets/images/app_logo.png',
                 width: 122,
                 height: 122,
-                semanticLabel: 'Gadgetbyte logo',
+                semanticLabel: 'GBN Store logo',
               ),
             ),
           ),

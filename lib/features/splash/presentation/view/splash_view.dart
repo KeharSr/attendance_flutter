@@ -45,7 +45,7 @@ class SplashView extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
-                          'assets/images/gadgetbyte_logo.jpg',
+                          'assets/images/app_logo.png',
                           width: 112,
                           height: 112,
                           semanticLabel: 'GBN Store logo',
