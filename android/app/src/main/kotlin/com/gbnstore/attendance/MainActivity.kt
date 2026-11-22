@@ -1,4 +1,4 @@
-package com.kehar.attendance_flutter
+package com.gbnstore.attendance
 
 import android.app.Notification
 import android.app.NotificationChannel
