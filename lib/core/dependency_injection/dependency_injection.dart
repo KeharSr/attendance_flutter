@@ -1,3 +1,8 @@
+import 'package:attendance_flutter/core/service/token_storage/token_local_data_source.dart';
+import 'package:attendance_flutter/core/service/token_storage/secure_token_local_data_source.dart';
+import 'package:attendance_flutter/features/auth/data/data_source/biometric_local_data_source.dart';
+import 'package:attendance_flutter/features/auth/data/data_source/auth_session_local_data_source.dart';
+import 'package:attendance_flutter/features/auth/domain/usecase/biometric_usecases.dart';
 import 'package:attendance_flutter/features/auth/domain/usecase/logout_user_usecase.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/usecase/delete_missing_attendance_usecase.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/usecase/edit_missing_attendance_usecase.dart';
@@ -40,10 +45,15 @@ import 'package:attendance_flutter/features/overtime/presentation/view_model/sta
 import 'package:attendance_flutter/features/overtime/presentation/view_model/view_model/overtime_view_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final dioProvider = Provider((ref) {
   return Dio();
+});
+
+final localAuthProvider = Provider((ref) {
+  return LocalAuthentication();
 });
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -59,7 +69,8 @@ final appSharedPrefsProvider = Provider<AppSharedPrefs>((ref) {
 
 class AuthSessionNotifier extends Notifier<bool> {
   @override
-  bool build() => ref.read(appSharedPrefsProvider).isUserLoggedIn();
+  // Saved credentials are not an unlocked session. Require sign-in on cold start.
+  bool build() => false;
 
   void markLoggedIn() {
     state = true;
@@ -76,6 +87,7 @@ final authSessionProvider = NotifierProvider<AuthSessionNotifier, bool>(
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(
+    tokenStore: ref.read(tokenLocalDataSourceProvider),
     onSessionExpired: () async {
       if (!ref.mounted) return;
       await ref.read(authViewModelProvider.notifier).expireSession();
@@ -84,14 +96,16 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 });
 
 final authDataSourceProvider = Provider<AuthDataSource>((ref) {
-  return AuthDataSource(
-    apiClient: ref.read(apiClientProvider),
-    appSharedPrefs: ref.read(appSharedPrefsProvider),
-  );
+  return AuthDataSource(apiClient: ref.read(apiClientProvider));
 });
 
 final authRepositoryImplProvider = Provider<AuthRepositoryImpl>((ref) {
-  return AuthRepositoryImpl(authDataSource: ref.read(authDataSourceProvider));
+  return AuthRepositoryImpl(
+    authDataSource: ref.read(authDataSourceProvider),
+    biometrics: ref.read(biometricLocalDataSourceProvider),
+    tokenStore: ref.read(tokenLocalDataSourceProvider),
+    session: ref.read(authSessionLocalDataSourceProvider),
+  );
 });
 
 final createUserUseCaseProvider = Provider<CreateUserUsecase>((ref) {
@@ -267,3 +281,34 @@ final missingAttendanceViewModelProvider =
     NotifierProvider<MissingAttendanceViewModel, MissingAttendanceState>(() {
       return MissingAttendanceViewModel();
     });
+
+final tokenLocalDataSourceProvider = Provider<TokenLocalDataSource>(
+  (ref) => SecureTokenLocalDataSource(),
+);
+final biometricLocalDataSourceProvider = Provider<BiometricLocalDataSource>(
+  (ref) => DeviceBiometricLocalDataSource(
+    authentication: ref.read(localAuthProvider),
+  ),
+);
+final authSessionLocalDataSourceProvider = Provider<AuthSessionLocalDataSource>(
+  (ref) => SavedAuthSessionLocalDataSource(
+    preferences: ref.read(appSharedPrefsProvider),
+  ),
+);
+final getBiometricStatusUsecaseProvider = Provider(
+  (ref) => GetBiometricStatusUsecase(ref.read(authRepositoryImplProvider)),
+);
+final enableBiometricLoginUsecaseProvider = Provider(
+  (ref) => EnableBiometricLoginUsecase(ref.read(authRepositoryImplProvider)),
+);
+final loginWithBiometricsUsecaseProvider = Provider(
+  (ref) => LoginWithBiometricsUsecase(ref.read(authRepositoryImplProvider)),
+);
+final disableBiometricAndLogoutUsecaseProvider = Provider(
+  (ref) =>
+      DisableBiometricAndLogoutUsecase(ref.read(authRepositoryImplProvider)),
+);
+
+final clearExpiredSessionUsecaseProvider = Provider(
+  (ref) => ClearExpiredSessionUsecase(ref.read(authRepositoryImplProvider)),
+);

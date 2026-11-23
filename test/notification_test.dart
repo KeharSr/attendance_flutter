@@ -148,6 +148,7 @@ Future<ProviderContainer> _container(
     container.dispose();
     await repository.dispose();
   });
+  if (loggedIn) container.read(authSessionProvider.notifier).markLoggedIn();
   return container;
 }
 

@@ -2,15 +2,13 @@ import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/core/api/api_response.dart';
-import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
 import 'package:attendance_flutter/features/auth/data/data_source/abstract_auth_data_source.dart';
 import 'package:attendance_flutter/features/auth/data/model/auth_api_model.dart';
 
 class AuthDataSource implements IAuthDataSource {
-  AuthDataSource({required this._apiClient, required this._appSharedPrefs});
+  AuthDataSource({required this._apiClient});
 
   final ApiClient _apiClient;
-  final AppSharedPrefs _appSharedPrefs;
 
   @override
   Future<ApiResponse<AuthApiModel>> createUser(AuthApiModel model) async {
@@ -52,7 +50,21 @@ class AuthDataSource implements IAuthDataSource {
       data: {"phone": phone, "password": password},
     );
 
-    return AuthApiModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    try {
+      final user = AuthApiModel.fromJson(
+        response.data['data'] as Map<String, dynamic>,
+      );
+      if (user.id == null || user.id!.trim().isEmpty) {
+        throw const FormatException(
+          'The sign-in response is missing the employee ID.',
+        );
+      }
+      return user;
+    } catch (_) {
+      // Do not leave new tokens paired with an old cached employee/enrollment.
+      await _apiClient.clearTokens();
+      rethrow;
+    }
   }
 
   @override
@@ -70,8 +82,12 @@ class AuthDataSource implements IAuthDataSource {
         statusCode: response.statusCode,
       );
     }
-    await _apiClient.clearTokens();
-    await _appSharedPrefs.removeSession();
     return _message(json);
   }
+
+  @override
+  Future<void> clearSavedSession() => _apiClient.clearTokens();
+
+  @override
+  Future<bool> restoreSavedSession() => _apiClient.restoreSavedSession();
 }

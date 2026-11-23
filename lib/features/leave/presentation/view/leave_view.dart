@@ -1,11 +1,11 @@
 import 'package:attendance_flutter/core/common/request_list_page.dart';
 import 'package:attendance_flutter/core/common/request_dialogs.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
-import 'package:attendance_flutter/features/leave/presentation/widgets/edit_leave_dialog.dart';
-import 'package:attendance_flutter/core/common/request_ui.dart';
+
+import 'edit_leave_view.dart';
+import '../widgets/leave_request_form.dart';
+
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
-import 'package:attendance_flutter/core/common/app_date_field.dart';
-import 'package:attendance_flutter/core/common/app_date_picker.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_history_view.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +18,7 @@ class LeaveView extends ConsumerStatefulWidget {
 }
 
 class _LeaveViewState extends ConsumerState<LeaveView> {
+  bool _editing = false;
   final _pageKey = GlobalKey<RequestListPageState>();
   BuildContext get _feedbackContext =>
       _pageKey.currentState?.feedbackContext ?? context;
@@ -29,13 +30,16 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
     super.dispose();
   }
 
-  void _editLeave(LeaveEntity request) {
+  Future<void> _editLeave(LeaveEntity request) async {
     if (ref.read(leaveViewModelProvider).isLoading) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => EditLeaveDialog(request: request),
-    );
+    _editing = true;
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => EditLeaveView(request: request)),
+      );
+    } finally {
+      _editing = false;
+    }
   }
 
   Future<void> _deleteLeave(LeaveEntity request) async {
@@ -64,7 +68,8 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
           ref.read(leaveViewModelProvider.notifier).clearSelectedDates();
         }
       }
-      if (previous?.errorMessage != next.errorMessage &&
+      if (!_editing &&
+          previous?.errorMessage != next.errorMessage &&
           next.errorMessage != null) {
         AppSnackBar.error(_feedbackContext, next.errorMessage!);
       }
@@ -87,106 +92,43 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
         onRefresh: () =>
             ref.read(leaveViewModelProvider.notifier).getAllLeaves(),
       ),
-      request: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        children: [
-          const RequestIntro(
-            'Request leave',
-            'Choose your dates and provide a reason for your time off.',
-          ),
-          RequestFormCard(
-            formKey: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppDateField(
-                  label: 'Start date',
-                  date: state.startDate,
-                  onTap: () async {
-                    if (state.isLoading) return;
-                    final date = await showAppDatePicker(
-                      context,
-                      selectedDate: state.startDate,
-                      helpText: 'Select start date',
-                    );
-                    if (date != null && mounted) {
-                      ref
-                          .read(leaveViewModelProvider.notifier)
-                          .setStartDate(date);
-                    }
-                  },
-                ),
-                const SizedBox(height: 20),
-                AppDateField(
-                  label: 'End date',
-                  date: state.endDate,
-                  onTap: () async {
-                    if (state.isLoading) return;
-                    final date = await showAppDatePicker(
-                      context,
-                      selectedDate: state.endDate ?? state.startDate,
-                      firstDate: state.startDate,
-                      helpText: 'Select end date',
-                    );
-                    if (date != null && mounted) {
-                      ref
-                          .read(leaveViewModelProvider.notifier)
-                          .setEndDate(date);
-                    }
-                  },
-                ),
-                const SizedBox(height: 20),
-                const RequestLabel('Reason', newText: '*'),
-                TextFormField(
-                  controller: _reasonController,
-                  enabled: !state.isLoading,
-                  minLines: 3,
-                  maxLines: 6,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: const TextStyle(
-                    color: requestInk,
-                    fontSize: 14,
-                    height: 1.6,
-                  ),
-                  decoration: requestInput('Briefly explain your request'),
-                  validator: (value) => (value?.trim().length ?? 0) < 5
-                      ? 'Please provide a little more detail.'
-                      : null,
-                ),
-                const SizedBox(height: 26),
-                RequestSubmitButton(
-                  loading: state.isLoading,
-                  onPressed: () {
-                    if (!(_formKey.currentState?.validate() ?? false)) return;
-                    if (state.startDate == null || state.endDate == null) {
-                      AppSnackBar.error(
-                        _feedbackContext,
-                        'Select a start date and end date.',
-                      );
-                      return;
-                    }
-                    if (state.endDate!.isBefore(state.startDate!)) {
-                      AppSnackBar.error(
-                        _feedbackContext,
-                        'End date must be on or after start date.',
-                      );
-                      return;
-                    }
-                    ref
-                        .read(leaveViewModelProvider.notifier)
-                        .submitLeave(
-                          startDate: state.startDate!,
-                          endDate: state.endDate!,
-                          reason: _reasonController.text.trim(),
-                        );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+      request: LeaveRequestForm(
+        formKey: _formKey,
+        reasonController: _reasonController,
+        startDate: state.startDate,
+        endDate: state.endDate,
+        loading: state.isLoading,
+        onSubmit: _submit,
+        onStartDateChanged: (date) =>
+            ref.read(leaveViewModelProvider.notifier).setStartDate(date),
+        onEndDateChanged: (date) =>
+            ref.read(leaveViewModelProvider.notifier).setEndDate(date),
       ),
     );
+  }
+
+  void _submit() {
+    final state = ref.read(leaveViewModelProvider);
+    if (state.isLoading || !(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    if (state.startDate == null || state.endDate == null) {
+      AppSnackBar.error(_feedbackContext, 'Select a start date and end date.');
+      return;
+    }
+    if (state.endDate!.isBefore(state.startDate!)) {
+      AppSnackBar.error(
+        _feedbackContext,
+        'End date must be on or after start date.',
+      );
+      return;
+    }
+    ref
+        .read(leaveViewModelProvider.notifier)
+        .submitLeave(
+          startDate: state.startDate!,
+          endDate: state.endDate!,
+          reason: _reasonController.text.trim(),
+        );
   }
 }

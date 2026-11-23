@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:attendance_flutter/core/common/clean_request_detail.dart';
 import 'package:attendance_flutter/core/common/styled_request_ui.dart';
+
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
 
 class LeaveDetailView extends StatelessWidget {
@@ -11,48 +12,43 @@ class LeaveDetailView extends StatelessWidget {
   });
   final String requestId;
   final List<LeaveEntity> requests;
-
   @override
   Widget build(BuildContext context) {
     LeaveEntity? report;
-    for (final item in requests) {
-      if (item.id == requestId) {
-        report = item;
+    for (final request in requests) {
+      if (request.id == requestId) {
+        report = request;
         break;
       }
     }
-    return StyledRequestDetail(
-      title: 'Leave Details',
+
+    return CleanRequestDetail(
+      title: 'Leave details',
       found: report != null,
+      dateLabel: 'Leave dates',
+      dateValue: report == null
+          ? ''
+          : '${styledRequestDate(report.startDate.toIso8601String())} \u2013 ${styledRequestDate(report.endDate.toIso8601String())}',
       status: report?.status ?? '',
       reason: report?.reason ?? '',
       rejectionReason: report?.rejectionReason,
-      dateLabel: 'Leave Dates',
-      dateValue: report == null
-          ? ''
-          : '${styledRequestDate(report.startDate.toIso8601String())} - ${styledRequestDate(report.endDate.toIso8601String())}',
-      metrics: report == null
-          ? const SizedBox.shrink()
-          : RequestMetricPair(
-              first: RequestMetric(
+      fields: report == null
+          ? []
+          : [
+              RequestDetailRow(
                 label: 'Start date',
                 value: styledRequestDate(report.startDate.toIso8601String()),
-                icon: LucideIcons.calendar,
               ),
-              second: RequestMetric(
+              RequestDetailRow(
                 label: 'End date',
                 value: styledRequestDate(report.endDate.toIso8601String()),
-                icon: LucideIcons.calendar,
               ),
-            ),
-      summary: report == null
-          ? const SizedBox.shrink()
-          : RequestMetric(
-              label: 'Requested Days',
-              value: leaveDaysLabel(report.startDate, report.endDate),
-              icon: LucideIcons.hourglass,
-              highlight: true,
-            ),
+              RequestDetailRow(
+                label: 'Requested Days',
+                value: leaveDaysLabel(report.startDate, report.endDate),
+                emphasis: true,
+              ),
+            ],
     );
   }
 }

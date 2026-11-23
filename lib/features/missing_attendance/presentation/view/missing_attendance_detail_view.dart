@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:attendance_flutter/core/common/clean_request_detail.dart';
 import 'package:attendance_flutter/core/common/styled_request_ui.dart';
 import 'package:attendance_flutter/core/common/request_detail_ui.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
@@ -12,13 +12,12 @@ class MissingAttendanceDetailView extends StatelessWidget {
   });
   final String requestId;
   final List<MissingAttendanceEntity> requests;
-
   @override
   Widget build(BuildContext context) {
     MissingAttendanceEntity? report;
-    for (final item in requests) {
-      if (item.id == requestId) {
-        report = item;
+    for (final request in requests) {
+      if (request.id == requestId) {
+        report = request;
         break;
       }
     }
@@ -28,36 +27,32 @@ class MissingAttendanceDetailView extends StatelessWidget {
             report.requestedCheckIn,
             report.requestCheckOut,
           ].where((time) => time.trim().isNotEmpty).length;
-    return StyledRequestDetail(
-      title: 'Missing Attendance Details',
+    return CleanRequestDetail(
+      title: 'Attendance details',
       found: report != null,
+      dateLabel: 'Attendance date',
+      dateValue: report == null ? '' : styledRequestDate(report.missingDate),
       status: report?.status ?? '',
       reason: report?.reason ?? '',
       rejectionReason: report?.rejectReason,
-      dateLabel: 'Attendance Date',
-      dateValue: styledRequestDate(report?.missingDate ?? ''),
-      metrics: report == null
-          ? const SizedBox.shrink()
-          : RequestMetricPair(
-              first: RequestMetric(
-                label: 'Requested check-in',
+      fields: report == null
+          ? []
+          : [
+              RequestDetailRow(
+                label: 'Check-in',
                 value: requestDisplayTime(report.requestedCheckIn),
-                icon: LucideIcons.clock,
               ),
-              second: RequestMetric(
-                label: 'Requested check-out',
+              RequestDetailRow(
+                label: 'Check-out',
                 value: requestDisplayTime(report.requestCheckOut),
-                icon: LucideIcons.clock,
               ),
-            ),
-      summary: report == null
-          ? const SizedBox.shrink()
-          : RequestMetric(
-              label: 'Requested Corrections',
-              value: '$corrections ${corrections == 1 ? 'update' : 'updates'}',
-              icon: LucideIcons.clipboardClock,
-              highlight: true,
-            ),
+              RequestDetailRow(
+                label: 'Corrections',
+                value:
+                    '$corrections ${corrections == 1 ? 'update' : 'updates'}',
+                emphasis: true,
+              ),
+            ],
     );
   }
 }

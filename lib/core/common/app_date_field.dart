@@ -1,6 +1,9 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
-import 'package:attendance_flutter/core/common/request_ui.dart';
+
+import 'app_theme.dart';
+import 'request_form_ui.dart';
+
 import 'package:flutter/material.dart';
 
 class AppDateField extends StatelessWidget {
@@ -19,22 +22,18 @@ class AppDateField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      RequestLabel(label),
+      RequestFieldLabel(label),
       TextFormField(
         key: ValueKey('$label-${date?.toIso8601String()}'),
         readOnly: true,
         enabled: enabled,
         onTap: onTap,
         initialValue: date == null ? null : DateTimeUtils.formatDate(date!),
-        style: const TextStyle(color: requestInk, fontSize: 14),
-        decoration: requestInput('Select date', icon: LucideIcons.calendar)
-            .copyWith(
-              suffixIcon: const Icon(
-                LucideIcons.chevronDown,
-                color: requestMuted,
-                size: 20,
-              ),
-            ),
+        style: const TextStyle(color: AppColors.ink, fontSize: 14),
+        decoration: cleanRequestInput(
+          'Select date',
+          icon: LucideIcons.calendar,
+        ),
       ),
     ],
   );

@@ -10,10 +10,14 @@ class AuthState extends Equatable {
   final String? errorMessage;
   final AuthEntity? user;
   final bool willPasswordShow;
+  final bool biometricAvailable, biometricEnabled, isBiometricLoading;
 
   const AuthState({
     required this.isLoading,
     this.isLoggingOut = false,
+    this.biometricAvailable = false,
+    this.biometricEnabled = false,
+    this.isBiometricLoading = false,
     this.logoutMessage,
     required this.successMessage,
     required this.errorMessage,
@@ -37,9 +41,15 @@ class AuthState extends Equatable {
     Object? errorMessage = _notProvided,
     Object? user = _notProvided,
     bool? willPasswordShow,
+    bool? biometricAvailable,
+    bool? biometricEnabled,
+    bool? isBiometricLoading,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
+      biometricAvailable: biometricAvailable ?? this.biometricAvailable,
+      biometricEnabled: biometricEnabled ?? this.biometricEnabled,
+      isBiometricLoading: isBiometricLoading ?? this.isBiometricLoading,
       isLoggingOut: isLoggingOut ?? this.isLoggingOut,
       logoutMessage: identical(logoutMessage, _notProvided)
           ? this.logoutMessage
@@ -64,5 +74,8 @@ class AuthState extends Equatable {
     errorMessage,
     user,
     willPasswordShow,
+    biometricAvailable,
+    biometricEnabled,
+    isBiometricLoading,
   ];
 }

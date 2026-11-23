@@ -34,14 +34,12 @@ class MissingAttendanceHistoryView extends StatelessWidget {
     error: errorMessage,
     onRefresh: onRefresh,
     emptyText: 'No missing attendance requests found',
-    itemBuilder: (context, index) => GestureDetector(
-      child: MissingAttendanceHistoryCardWidget(
-        request: requests[index],
-        actionsEnabled: !isLoading,
-        onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
-        onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
-      ),
-      onTap: () => Navigator.of(context).push(
+    itemBuilder: (context, index) => MissingAttendanceHistoryCardWidget(
+      request: requests[index],
+      actionsEnabled: !isLoading,
+      onEdit: onEdit == null ? null : () => onEdit!(requests[index]),
+      onDelete: onDelete == null ? null : () => onDelete!(requests[index]),
+      onView: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => MissingAttendanceDetailView(
             requestId: requests[index].id,

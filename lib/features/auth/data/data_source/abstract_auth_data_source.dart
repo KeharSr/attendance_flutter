@@ -8,4 +8,6 @@ abstract class IAuthDataSource {
     required String password,
   });
   Future<String> logoutUser();
+  Future<bool> restoreSavedSession();
+  Future<void> clearSavedSession();
 }

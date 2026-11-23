@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/app_loading_indicator.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
@@ -25,6 +26,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(authViewModelProvider.notifier).loadBiometricStatus();
+      }
+    });
     if (widget.message != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) AppSnackBar.success(context, widget.message!);
@@ -43,217 +49,280 @@ class _LoginViewState extends ConsumerState<LoginView> {
     });
     final state = ref.watch(authViewModelProvider);
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        bottom: false,
         child: LayoutBuilder(
-          builder: (context, constraints) {
-            final headerHeight = (constraints.maxHeight * .35).clamp(
-              230.0,
-              310.0,
-            );
-            final panelHeight = (constraints.maxHeight - headerHeight).clamp(
-              0.0,
-              double.infinity,
-            );
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          builder: (context, constraints) => SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 56).clamp(
+                  0.0,
+                  double.infinity,
+                ),
+              ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 485),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        height: headerHeight,
-                        child: const _BrandHeader(),
+                      const _BrandHeader(),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Welcome back',
+                        style: TextStyle(
+                          color: _ink,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -.6,
+                        ),
                       ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Sign in to your employee workspace.',
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Container(
-                        width: double.infinity,
-                        constraints: BoxConstraints(minHeight: panelHeight),
-                        padding: EdgeInsets.fromLTRB(
-                          constraints.maxWidth < 400 ? 24 : 32,
-                          28,
-                          constraints.maxWidth < 400 ? 24 : 32,
-                          20 + MediaQuery.paddingOf(context).bottom,
-                        ),
-                        decoration: const BoxDecoration(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(32),
-                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE4E7EC)),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x07163449),
+                              blurRadius: 20,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
                         ),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight:
-                                (panelHeight -
-                                        48 -
-                                        MediaQuery.paddingOf(context).bottom)
-                                    .clamp(0.0, double.infinity),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Form(
-                                key: _formKey,
-                                child: AutofillGroup(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const _FieldLabel('Phone number'),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _phoneController,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: _ink,
-                                        ),
-                                        validator: (value) =>
-                                            value == null ||
-                                                value.trim().isEmpty
-                                            ? 'Enter your phone number'
-                                            : null,
-                                        keyboardType: TextInputType.phone,
-                                        textInputAction: TextInputAction.next,
-                                        autofillHints: const [
-                                          AutofillHints.telephoneNumber,
-                                        ],
-                                        decoration: _fieldDecoration(
-                                          'Enter your phone number',
+                        child: Form(
+                          key: _formKey,
+                          child: AutofillGroup(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const _FieldLabel('Phone number'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _phoneController,
+                                  enabled: !state.isLoading,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: _ink,
+                                  ),
+                                  validator: (value) =>
+                                      value == null || value.trim().isEmpty
+                                      ? 'Enter your phone number'
+                                      : null,
+                                  keyboardType: TextInputType.phone,
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [
+                                    AutofillHints.telephoneNumber,
+                                  ],
+                                  decoration:
+                                      _fieldDecoration(
+                                        'Enter your phone number',
+                                      ).copyWith(
+                                        prefixIcon: const Icon(
+                                          LucideIcons.phone,
+                                          size: 18,
+                                          color: _muted,
                                         ),
                                       ),
-                                      const SizedBox(height: 20),
-                                      const _FieldLabel('Password'),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _passwordController,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: _ink,
+                                ),
+                                const SizedBox(height: 18),
+                                const _FieldLabel('Password'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  enabled: !state.isLoading,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: _ink,
+                                  ),
+                                  validator: (value) =>
+                                      value == null || value.isEmpty
+                                      ? 'Enter your password'
+                                      : null,
+                                  obscureText: !state.willPasswordShow,
+                                  enableSuggestions: false,
+                                  autocorrect: false,
+                                  autofillHints: const [AutofillHints.password],
+                                  textInputAction: TextInputAction.done,
+                                  onFieldSubmitted: (_) {
+                                    if (!state.isLoading) _signIn();
+                                  },
+                                  decoration:
+                                      _fieldDecoration(
+                                        'Enter your password',
+                                      ).copyWith(
+                                        prefixIcon: const Icon(
+                                          LucideIcons.lockKeyhole,
+                                          size: 18,
+                                          color: _muted,
                                         ),
-                                        validator: (value) =>
-                                            value == null || value.isEmpty
-                                            ? 'Enter your password'
-                                            : null,
-                                        obscureText: !state.willPasswordShow,
-                                        enableSuggestions: false,
-                                        autocorrect: false,
-                                        autofillHints: const [
-                                          AutofillHints.password,
-                                        ],
-                                        textInputAction: TextInputAction.done,
-                                        onFieldSubmitted: (_) {
-                                          if (!state.isLoading) _signIn();
-                                        },
-                                        decoration:
-                                            _fieldDecoration(
-                                              'Enter your password',
-                                            ).copyWith(
-                                              suffixIcon: TextButton(
-                                                onPressed: () => ref
+                                        suffixIcon: IconButton(
+                                          tooltip: state.willPasswordShow
+                                              ? 'Hide password'
+                                              : 'Show password',
+                                          onPressed: state.isLoading
+                                              ? null
+                                              : () => ref
                                                     .read(
                                                       authViewModelProvider
                                                           .notifier,
                                                     )
                                                     .togglePasswordVisibility(),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: const Color(
-                                                    0xFF467D91,
-                                                  ),
-                                                  minimumSize: const Size(
-                                                    64,
-                                                    48,
-                                                  ),
-                                                  textStyle: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  state.willPasswordShow
-                                                      ? 'Hide'
-                                                      : 'Show',
-                                                ),
-                                              ),
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: TextButton(
-                                          onPressed: state.isLoading
-                                              ? null
-                                              : _forgotPassword,
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: _teal,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 0,
-                                              vertical: 12,
-                                            ),
-                                            textStyle: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                          icon: Icon(
+                                            state.willPasswordShow
+                                                ? LucideIcons.eyeOff
+                                                : LucideIcons.eye,
+                                            size: 18,
                                           ),
-                                          child: const Text('Forgot password?'),
+                                          color: _muted,
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height: 48,
-                                        child: FilledButton(
-                                          onPressed: state.isLoading
-                                              ? null
-                                              : _signIn,
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor: _teal,
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
+                                ),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: state.isLoading
+                                        ? null
+                                        : _forgotPassword,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: _teal,
+                                      textStyle: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    child: const Text('Forgot password?'),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            minHeight: 48,
+                                          ),
+                                          child: FilledButton(
+                                            onPressed: state.isLoading
+                                                ? null
+                                                : _signIn,
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: _teal,
+                                              foregroundColor: Colors.white,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 14,
+                                                    horizontal: 16,
+                                                  ),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
-                                            textStyle: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
+                                            child: state.isLoading
+                                                ? const AppLoadingIndicator(
+                                                    size: 20,
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                    label: 'Signing in',
+                                                  )
+                                                : const Text('Sign in'),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      SizedBox(
+                                        width: 48,
+                                        child: Tooltip(
+                                          message:
+                                              state.biometricEnabled &&
+                                                  state.biometricAvailable
+                                              ? 'Sign in with biometrics'
+                                              : 'Enable biometric sign-in in Profile after signing in',
+                                          child: OutlinedButton(
+                                            onPressed:
+                                                state.isLoading ||
+                                                    !state.biometricEnabled ||
+                                                    !state.biometricAvailable
+                                                ? null
+                                                : () => ref
+                                                      .read(
+                                                        authViewModelProvider
+                                                            .notifier,
+                                                      )
+                                                      .loginWithBiometrics(),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(48, 48),
+                                              backgroundColor: const Color(
+                                                0xFFEDF7FA,
+                                              ),
+                                              foregroundColor: _teal,
+                                              side: BorderSide(
+                                                color: _teal.withValues(
+                                                  alpha: .3,
+                                                ),
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            child: const Icon(
+                                              LucideIcons.fingerprint,
+                                              size: 26,
                                             ),
                                           ),
-                                          child: state.isLoading
-                                              ? const AppLoadingIndicator(
-                                                  size: 20,
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                  label: 'Signing in',
-                                                )
-                                              : const Text('Sign in'),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.only(top: 48),
-                                child: Text(
-                                  'No account? Contact your workspace administrator.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _muted,
-                                    fontSize: 12,
-                                    height: 1.6,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'No account? Contact your workspace administrator.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 12,
+                          height: 1.6,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
@@ -291,7 +360,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   InputDecoration _fieldDecoration(String hint) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
     );
     return InputDecoration(
@@ -334,46 +403,47 @@ class _FieldLabel extends StatelessWidget {
 
 class _BrandHeader extends StatelessWidget {
   const _BrandHeader();
-
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: SizedBox(
-            width: 76,
-            height: 76,
-            child: OverflowBox(
-              maxWidth: 122,
-              maxHeight: 122,
-              child: Image.asset(
-                'assets/images/app_logo.png',
-                width: 122,
-                height: 122,
-                semanticLabel: 'GBN Store logo',
-              ),
+  Widget build(BuildContext context) => Row(
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: OverflowBox(
+            maxWidth: 66,
+            maxHeight: 66,
+            child: Image.asset(
+              'assets/images/app_logo.png',
+              width: 66,
+              height: 66,
+              semanticLabel: 'GBN Store logo',
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          'Welcome back',
-          style: TextStyle(
-            color: _ink,
-            fontSize: 26,
-            height: 1.25,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -.6,
-          ),
+      ),
+      const SizedBox(width: 12),
+      const Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'GBN Store',
+              style: TextStyle(
+                color: _ink,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 3),
+            Text(
+              'Employee workspace',
+              style: TextStyle(color: _muted, fontSize: 12),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Sign in to GBN Store',
-          style: TextStyle(color: _muted, fontSize: 14),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }

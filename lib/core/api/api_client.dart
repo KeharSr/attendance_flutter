@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:attendance_flutter/core/service/token_storage/token_local_data_source.dart';
+import 'package:attendance_flutter/core/service/token_storage/secure_token_local_data_source.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import 'api_endpoints.dart';
@@ -9,14 +10,15 @@ import 'api_exception.dart';
 
 class ApiClient {
   late final Dio _dio;
-  final _secureToken = _SecureStorage();
+  final TokenLocalDataSource _secureToken;
   late final _AuthInterceptor _authInterceptor;
 
   ApiClient({
     Dio? dio,
     Dio? refreshDio,
+    TokenLocalDataSource? tokenStore,
     Future<void> Function()? onSessionExpired,
-  }) {
+  }) : _secureToken = tokenStore ?? SecureTokenLocalDataSource() {
     _dio =
         dio ??
         Dio(
@@ -63,9 +65,9 @@ class ApiClient {
     if (kDebugMode) {
       _dio.interceptors.add(
         PrettyDioLogger(
-          requestHeader: true,
-          requestBody: true,
-          responseBody: true,
+          requestHeader: false,
+          requestBody: false,
+          responseBody: false,
           responseHeader: false,
           error: true,
           compact: true,
@@ -80,6 +82,9 @@ class ApiClient {
   Future<String?> getRefreshToken() => _secureToken.getRefreshToken();
 
   Future<void> clearTokens() => _authInterceptor.clearTokens();
+
+  /// Validates a saved session using the existing single-flight refresh path.
+  Future<bool> restoreSavedSession() => _authInterceptor.restoreSavedSession();
 
   Dio get dio => _dio;
 
@@ -206,36 +211,6 @@ class ApiClient {
   }
 }
 
-class _SecureStorage {
-  final _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(),
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
-  static const String _authAccessToken = 'auth_token';
-  static const String _authRefreshToken = "auth_refresh_token";
-
-  Future<String?> getAccessToken() => _storage.read(key: _authAccessToken);
-  Future<String?> getRefreshToken() => _storage.read(key: _authRefreshToken);
-
-  Future<void> saveTokens({
-    required String authAccessToken,
-    String? refreshToken,
-  }) async {
-    await _storage.write(key: _authAccessToken, value: authAccessToken);
-
-    if (refreshToken != null) {
-      await _storage.write(key: _authRefreshToken, value: refreshToken);
-    }
-  }
-
-  Future<void> clearTokens() async {
-    await Future.wait([
-      _storage.delete(key: _authAccessToken),
-      _storage.delete(key: _authRefreshToken),
-    ]);
-  }
-}
-
 class _AuthInterceptor extends Interceptor {
   _AuthInterceptor({
     required this._dio,
@@ -246,7 +221,7 @@ class _AuthInterceptor extends Interceptor {
 
   final Dio _dio;
   final Dio _refreshDio;
-  final _SecureStorage _storage;
+  final TokenLocalDataSource _storage;
   final Future<void> Function()? onSessionExpired;
   Future<bool>? _refreshFuture;
   int? _refreshVersion;
@@ -431,6 +406,13 @@ class _AuthInterceptor extends Interceptor {
     }
   }
 
+  Future<bool> restoreSavedSession() async {
+    final version = _sessionVersion;
+    final restored = await _refreshToken(version);
+    if (!restored) await _expireSession(version);
+    return restored && version == _sessionVersion;
+  }
+
   Future<bool> _refreshToken(int version) async {
     final existing = _refreshFuture;
     if (existing != null && _refreshVersion == version) return existing;
@@ -467,7 +449,9 @@ class _AuthInterceptor extends Interceptor {
           access.isEmpty ||
           refresh is! String ||
           refresh.isEmpty) {
-        return false;
+        throw const FormatException(
+          'The session refresh response is missing tokens.',
+        );
       }
       if (version != _sessionVersion) return false;
       await _write(() async {

@@ -9,6 +9,10 @@ import 'package:attendance_flutter/core/dependency_injection/dependency_injectio
 import 'package:attendance_flutter/core/service/shared_prefs/app_shared_prefs.dart';
 import 'package:attendance_flutter/features/auth/data/data_source/auth_data_source.dart';
 import 'package:attendance_flutter/features/auth/data/repository/auth_repository_impl.dart';
+import 'package:attendance_flutter/features/auth/data/data_source/biometric_local_data_source.dart';
+import 'package:attendance_flutter/features/auth/data/data_source/auth_session_local_data_source.dart';
+import 'package:attendance_flutter/core/service/token_storage/secure_token_local_data_source.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:attendance_flutter/features/auth/presentation/view/login_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/dashboard_view.dart';
 import 'package:attendance_flutter/features/dashboard/presentation/view/profile_view.dart';
@@ -98,11 +102,11 @@ class _Backend {
     }
     if (path.endsWith('/users/refreshToken')) {
       refreshes++;
-      expect(request.headers['Authorization'], isNull);
+      expectSync(request.headers['Authorization'], isNull);
       final body = request.data is String
           ? jsonDecode(request.data as String)
           : request.data;
-      expect((body as Map)['refreshToken'], 'refresh-valid');
+      expectSync((body as Map)['refreshToken'], 'refresh-valid');
       if (pendingRefresh != null) await pendingRefresh!.future;
       if (rejectRefresh) return json(401, {'message': 'Invalid refresh token'});
       validAccess = 'access-rotated';
@@ -126,6 +130,20 @@ class _Backend {
     return json(200, {'success': true, 'data': null});
   }
 }
+
+AuthRepositoryImpl _repository(
+  _Backend backend,
+  SharedPreferences preferences,
+) => AuthRepositoryImpl(
+  authDataSource: AuthDataSource(apiClient: backend.client),
+  biometrics: DeviceBiometricLocalDataSource(
+    authentication: LocalAuthentication(),
+  ),
+  tokenStore: SecureTokenLocalDataSource(),
+  session: SavedAuthSessionLocalDataSource(
+    preferences: AppSharedPrefs(sharedPreferences: preferences),
+  ),
+);
 
 Future<SharedPreferences> _prefs({bool loggedIn = true}) async {
   SharedPreferences.setMockInitialValues({
@@ -156,11 +174,14 @@ void main() {
   test('logout posts the bearer token, then clears secure storage and saved employee data', () async {
     final prefs = await _prefs();
     final backend = _Backend();
-    final source = AuthDataSource(
-      apiClient: backend.client,
-      appSharedPrefs: AppSharedPrefs(sharedPreferences: prefs),
+    final source = _repository(backend, prefs);
+    expect(
+      (await source.logoutUser()).fold(
+        (failure) => throw StateError(failure.message),
+        (message) => message,
+      ),
+      'Logout successful',
     );
-    expect(await source.logoutUser(), 'Logout successful');
     expect(backend.requests.single.method, 'POST');
     expect(backend.requests.single.path, ApiEndpoints.logout);
     expect(
@@ -182,11 +203,14 @@ void main() {
     });
     final prefs = await _prefs();
     final backend = _Backend();
-    final source = AuthDataSource(
-      apiClient: backend.client,
-      appSharedPrefs: AppSharedPrefs(sharedPreferences: prefs),
+    final source = _repository(backend, prefs);
+    expect(
+      (await source.logoutUser()).fold(
+        (failure) => throw StateError(failure.message),
+        (message) => message,
+      ),
+      'Logout successful',
     );
-    expect(await source.logoutUser(), 'Logout successful');
     expect(backend.refreshes, 1);
     expect(backend.logouts, 1);
     expect(backend.requests.map((r) => r.uri.path).toList(), [
@@ -207,12 +231,7 @@ void main() {
     () async {
       final prefs = await _prefs();
       final backend = _Backend()..failLogout = true;
-      final repo = AuthRepositoryImpl(
-        authDataSource: AuthDataSource(
-          apiClient: backend.client,
-          appSharedPrefs: AppSharedPrefs(sharedPreferences: prefs),
-        ),
-      );
+      final repo = _repository(backend, prefs);
       final result = await repo.logoutUser();
       expect(result.isLeft(), isTrue);
       result.fold(
@@ -333,7 +352,8 @@ void main() {
           .post<dynamic>(ApiEndpoints.registerDevice)
           .then<Object?>((_) => null, onError: (Object error) => error);
       await tester.pumpAndSettle();
-      expect(await registration, isA<Exception>());
+      final registrationError = await registration;
+      expect(registrationError, isA<Exception>());
       await tester.pump(const Duration(milliseconds: 2400));
       await tester.pumpAndSettle();
       expect(expirations, 1);
@@ -419,6 +439,7 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
+      container.read(authSessionProvider.notifier).markLoggedIn();
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,

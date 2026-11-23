@@ -4,13 +4,12 @@ import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/core/common/app_theme.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
-import 'package:attendance_flutter/core/common/styled_request_ui.dart'
-    show StyledRequestCard;
+import 'package:attendance_flutter/core/common/compact_request_card.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_view.dart';
-import 'package:attendance_flutter/features/leave/presentation/widgets/edit_leave_dialog.dart';
+import 'package:attendance_flutter/features/leave/presentation/view/edit_leave_view.dart';
 import 'package:attendance_flutter/features/missing_attendance/presentation/view/missing_attendance_view.dart';
-import 'package:attendance_flutter/features/missing_attendance/presentation/widgets/edit_missing_attendance_dialog.dart';
+import 'package:attendance_flutter/features/missing_attendance/presentation/view/edit_missing_attendance_view.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,10 +123,16 @@ class _Backend {
       calls.where((call) => call.method != 'GET');
 }
 
+Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+}
+
 void main() {
   for (final isLeave in [true, false]) {
     final feature = isLeave ? 'leave' : 'missing attendance';
-    final dialogType = isLeave ? EditLeaveDialog : EditMissingAttendanceDialog;
+    final dialogType = isLeave ? EditLeaveView : EditMissingAttendanceView;
 
     Future<_Backend> mount(WidgetTester tester, {double textScale = 1}) async {
       final backend = _Backend();
@@ -137,6 +142,11 @@ void main() {
           overrides: [apiClientProvider.overrideWithValue(backend.client)],
           child: MaterialApp(
             theme: buildAppTheme(),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            ),
             home: Scaffold(
               body: isLeave ? const LeaveView() : const MissingAttendanceView(),
             ),
@@ -152,17 +162,17 @@ void main() {
       (tester) async {
         final backend = await mount(tester);
         // Only the pending card has actions; the approved card has none.
-        expect(find.text('Edit'), findsOneWidget);
-        expect(find.text('Delete'), findsOneWidget);
-        await tester.tap(find.byType(FloatingActionButton));
+        expect(find.byTooltip('Edit request'), findsOneWidget);
+        expect(find.byTooltip('Delete request'), findsOneWidget);
+        await tapVisible(tester, find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextFormField).last,
           'An unfinished new request.',
         );
-        await tester.tap(find.text('Back to requests'));
+        await tapVisible(tester, find.text('Back to requests'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Edit'));
+        await tapVisible(tester, find.byTooltip('Edit request'));
         await tester.pumpAndSettle();
         final reason = find
             .descendant(
@@ -178,7 +188,7 @@ void main() {
           expectedReason,
         );
         await tester.enterText(reason, 'Updated request explanation.');
-        await tester.tap(find.text('Save changes'));
+        await tapVisible(tester, find.text('Save changes'));
         await tester.pumpAndSettle();
         expect(find.byType(dialogType), findsNothing);
         expect(find.text('Updated request explanation.'), findsOneWidget);
@@ -204,7 +214,7 @@ void main() {
           expect((mutation.data as Map)['requestedCheckIn'], '09:00');
           expect((mutation.data as Map)['requestedCheckOut'], '17:00');
         }
-        await tester.tap(find.byType(FloatingActionButton));
+        await tapVisible(tester, find.byType(FloatingActionButton));
         await tester.pumpAndSettle();
         expect(
           tester
@@ -222,15 +232,16 @@ void main() {
       '$feature deletion requires confirmation and removes only the selected record',
       (tester) async {
         final backend = await mount(tester);
-        await tester.tap(find.text('Delete'));
+        await tapVisible(tester, find.byTooltip('Delete request'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Cancel'));
+        await tapVisible(tester, find.text('Cancel'));
         await tester.pumpAndSettle();
         expect(backend.mutations, isEmpty);
         expect(find.text('2 requests'), findsOneWidget);
-        await tester.tap(find.text('Delete'));
+        await tapVisible(tester, find.byTooltip('Delete request'));
         await tester.pumpAndSettle();
-        await tester.tap(
+        await tapVisible(
+          tester,
           find.descendant(
             of: find.byType(AlertDialog),
             matching: find.text('Delete'),
@@ -244,26 +255,26 @@ void main() {
               ? ApiEndpoints.deleteLeave('1')
               : ApiEndpoints.deleteMissingAttendance('2'),
         );
-        expect(find.byType(StyledRequestCard), findsOneWidget);
+        expect(find.byType(CompactRequestCard), findsOneWidget);
         expect(
           find.descendant(
-            of: find.byType(StyledRequestCard),
+            of: find.byType(CompactRequestCard),
             matching: find.text('Approved'),
           ),
           findsOneWidget,
         );
-        expect(find.text('Edit'), findsNothing);
+        expect(find.byTooltip('Edit request'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );
 
-    testWidgets('$feature failed edit keeps the dialog and entered values', (
+    testWidgets('$feature failed edit keeps the screen and entered values', (
       tester,
     ) async {
       final backend = await mount(tester)
         ..failMutation = true;
-      await tester.tap(find.text('Edit'));
+      await tapVisible(tester, find.byTooltip('Edit request'));
       await tester.pumpAndSettle();
       final reason = find
           .descendant(
@@ -272,7 +283,7 @@ void main() {
           )
           .last;
       await tester.enterText(reason, 'Keep these unsaved changes.');
-      await tester.tap(find.text('Save changes'));
+      await tapVisible(tester, find.text('Save changes'));
       await tester.pumpAndSettle();
       expect(find.byType(dialogType), findsOneWidget);
       expect(
@@ -291,9 +302,10 @@ void main() {
     testWidgets('$feature failed delete preserves the list', (tester) async {
       final backend = await mount(tester)
         ..failMutation = true;
-      await tester.tap(find.text('Delete'));
+      await tapVisible(tester, find.byTooltip('Delete request'));
       await tester.pumpAndSettle();
-      await tester.tap(
+      await tapVisible(
+        tester,
         find.descendant(
           of: find.byType(AlertDialog),
           matching: find.text('Delete'),
@@ -311,16 +323,16 @@ void main() {
     });
 
     testWidgets(
-      '$feature actions and edit dialog fit a narrow screen with enlarged text',
+      '$feature actions and edit screen fit a narrow screen with enlarged text',
       (tester) async {
         tester.view.physicalSize = const Size(320, 640);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         await mount(tester, textScale: 1.8);
-        await tester.ensureVisible(find.text('Edit'));
+        await tester.ensureVisible(find.byTooltip('Edit request'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Edit'));
+        await tapVisible(tester, find.byTooltip('Edit request'));
         await tester.pumpAndSettle();
         expect(find.byType(dialogType), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -332,10 +344,10 @@ void main() {
       '$feature disables duplicate saves while the update is pending',
       (tester) async {
         final backend = await mount(tester);
-        await tester.tap(find.text('Edit'));
+        await tapVisible(tester, find.byTooltip('Edit request'));
         await tester.pumpAndSettle();
         backend.pendingMutation = Completer<void>();
-        await tester.tap(find.text('Save changes'));
+        await tapVisible(tester, find.text('Save changes'));
         for (
           var attempt = 0;
           attempt < 10 && backend.mutations.isEmpty;
@@ -345,7 +357,7 @@ void main() {
         }
         final buttons = tester.widgetList<FilledButton>(
           find.descendant(
-            of: find.byType(AlertDialog),
+            of: find.byType(dialogType),
             matching: find.byType(FilledButton),
           ),
         );
@@ -374,15 +386,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Edit'));
+      await tapVisible(tester, find.byTooltip('Edit request'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Save changes'));
+      await tapVisible(tester, find.text('Save changes'));
       await tester.pumpAndSettle();
       expect(find.text('Check-out must be after check-in.'), findsOneWidget);
       expect(backend.mutations, isEmpty);
-      await tester.tap(find.byTooltip('Clear Requested check-out'));
-      await tester.tap(find.byTooltip('Clear Requested check-in'));
-      await tester.tap(find.text('Save changes'));
+      await tapVisible(tester, find.byTooltip('Clear Requested check-out'));
+      await tapVisible(tester, find.byTooltip('Clear Requested check-in'));
+      await tapVisible(tester, find.text('Save changes'));
       await tester.pumpAndSettle();
       expect(
         find.text('Provide at least one check-in or check-out time.'),
@@ -408,11 +420,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Edit'));
+      await tapVisible(tester, find.byTooltip('Edit request'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Save changes'));
+      await tapVisible(tester, find.text('Save changes'));
       await tester.pumpAndSettle();
-      expect(find.byType(EditMissingAttendanceDialog), findsNothing);
+      expect(find.byType(EditMissingAttendanceView), findsNothing);
       expect(
         (backend.mutations.single.data as Map)['requestedCheckIn'],
         '09:00',

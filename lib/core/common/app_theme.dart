@@ -21,7 +21,7 @@ abstract final class AppColors {
 ThemeData buildAppTheme() {
   final base = ThemeData(
     useMaterial3: true,
-    fontFamily: 'Poppins',
+    fontFamily: 'Inter',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.accent,
       primary: AppColors.accent,
@@ -31,6 +31,58 @@ ThemeData buildAppTheme() {
       error: AppColors.danger,
     ),
     scaffoldBackgroundColor: Colors.white,
+  );
+  final textTheme = base.textTheme
+      .copyWith(
+        displayLarge: base.textTheme.displayLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        displayMedium: base.textTheme.displayMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        displaySmall: base.textTheme.displaySmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        headlineLarge: base.textTheme.headlineLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        headlineMedium: base.textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        headlineSmall: base.textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleLarge: base.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        titleMedium: base.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        titleSmall: base.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: base.textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w400,
+        ),
+        bodyMedium: base.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w400,
+        ),
+        bodySmall: base.textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.w400,
+        ),
+        labelLarge: base.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+        labelMedium: base.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+        labelSmall: base.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+      )
+      .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink);
+  final buttonTextStyle = textTheme.labelLarge?.copyWith(
+    fontWeight: FontWeight.w600,
   );
   final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(18));
   final border = OutlineInputBorder(
@@ -44,12 +96,10 @@ ThemeData buildAppTheme() {
       drawerButtonIconBuilder: (context) => const Icon(LucideIcons.menu),
       endDrawerButtonIconBuilder: (context) => const Icon(LucideIcons.menu),
     ),
-    textTheme: base.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
-    ),
+    textTheme: textTheme,
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
+      titleTextStyle: textTheme.titleLarge,
       backgroundColor: Colors.white,
       foregroundColor: AppColors.ink,
       surfaceTintColor: Colors.transparent,
@@ -73,6 +123,10 @@ ThemeData buildAppTheme() {
         borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
       ),
       hintStyle: const TextStyle(color: AppColors.muted, fontSize: 14),
+      labelStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      floatingLabelStyle: textTheme.bodyLarge?.copyWith(
+        fontWeight: FontWeight.w500,
+      ),
       errorMaxLines: 3,
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -82,7 +136,7 @@ ThemeData buildAppTheme() {
         minimumSize: const Size(48, 48),
         elevation: 0,
         shape: shape,
-        textStyle: base.textTheme.labelLarge?.copyWith(
+        textStyle: buttonTextStyle?.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -94,22 +148,27 @@ ThemeData buildAppTheme() {
         minimumSize: const Size(48, 44),
         side: const BorderSide(color: AppColors.border),
         shape: shape,
+        textStyle: buttonTextStyle,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.accent,
-        textStyle: base.textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: buttonTextStyle,
       ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(textStyle: buttonTextStyle),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      extendedTextStyle: buttonTextStyle,
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       titleTextStyle: const TextStyle(
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         color: AppColors.ink,
         fontSize: 20,
         fontWeight: FontWeight.w600,

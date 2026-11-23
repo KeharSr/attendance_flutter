@@ -27,6 +27,7 @@ void main() {
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(container.dispose);
+      container.read(authSessionProvider.notifier).markLoggedIn();
       expect(await container.read(notificationInboxProvider.future), isEmpty);
       await NotificationLocalDataSource(preferences: prefs).saveNotification(
         'employee-a',
@@ -135,6 +136,7 @@ void main() {
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(container.dispose);
+      container.read(authSessionProvider.notifier).markLoggedIn();
       final subscription = container.listen(
         notificationInboxProvider,
         (_, _) {},
@@ -179,6 +181,7 @@ void main() {
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       );
       addTearDown(container.dispose);
+      container.read(authSessionProvider.notifier).markLoggedIn();
       tester.view.physicalSize = const Size(320, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);

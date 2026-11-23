@@ -43,11 +43,9 @@ class CustomNavigationBar extends StatelessWidget {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
+          (states) => Theme.of(context).textTheme.labelMedium!.copyWith(
             fontSize: 11,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w600
-                : FontWeight.w400,
+            fontWeight: FontWeight.w500,
             color: states.contains(WidgetState.selected)
                 ? AppColors.accent
                 : AppColors.muted,

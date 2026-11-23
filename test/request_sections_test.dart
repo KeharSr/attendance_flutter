@@ -1,4 +1,5 @@
 import 'package:attendance_flutter/core/common/styled_request_ui.dart';
+import 'package:attendance_flutter/core/common/compact_request_card.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_history_view.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_detail_view.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
@@ -75,7 +76,7 @@ void main() {
     ]) {
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: history)));
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(StyledRequestCard));
+      await tester.tap(find.byType(CompactRequestCard));
       await tester.pumpAndSettle();
       expect(find.text('Employee Request'), findsOneWidget);
       expect(find.text('Administrator Approval'), findsOneWidget);
@@ -129,9 +130,9 @@ void main() {
       );
       expect(find.text('1 update'), findsOneWidget);
       expect(find.text('Not requested'), findsOneWidget);
-      await tester.ensureVisible(find.text('Edit'));
+      await tester.ensureVisible(find.byTooltip('Edit request'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Edit'));
+      await tester.tap(find.byTooltip('Edit request'));
       expect(edits, 0);
       expect(tester.takeException(), isNull);
     },

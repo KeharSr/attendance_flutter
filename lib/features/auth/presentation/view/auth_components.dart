@@ -41,7 +41,7 @@ class AttendanceBrandHeader extends StatelessWidget {
                 style: TextStyle(
                   color: authNavy,
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.3,
                 ),
               ),
@@ -53,7 +53,7 @@ class AttendanceBrandHeader extends StatelessWidget {
             style: const TextStyle(
               color: authBlue,
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
               letterSpacing: .7,
             ),
           ),
@@ -63,7 +63,7 @@ class AttendanceBrandHeader extends StatelessWidget {
             style: const TextStyle(
               color: authNavy,
               fontSize: 30,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: -.8,
             ),
           ),
@@ -92,7 +92,7 @@ class AuthFieldLabel extends StatelessWidget {
     return Text(
       label,
       style: Theme.of(context).textTheme.labelLarge
-          ?.copyWith(color: authNavy, fontWeight: FontWeight.w700),
+          ?.copyWith(color: authNavy, fontWeight: FontWeight.w500),
     );
   }
 }

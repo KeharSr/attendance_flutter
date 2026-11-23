@@ -39,8 +39,10 @@ class OvertimeHistoryView extends StatelessWidget {
       error: errorMessage,
       onRefresh: onRefresh,
       emptyText: 'No overtime requests found',
-      itemBuilder: (context, index) => GestureDetector(
-        onTap: () => Navigator.of(context).push(
+      itemBuilder: (context, index) => OvertimeHistoryCardWidget(
+        request: sorted[index],
+        actionsEnabled: !isLoading,
+        onView: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => OvertimeDetailView(
               requestId: sorted[index].id,
@@ -48,11 +50,8 @@ class OvertimeHistoryView extends StatelessWidget {
             ),
           ),
         ),
-        child: OvertimeHistoryCardWidget(
-          request: sorted[index],
-          onEdit: onEdit == null ? null : () => onEdit!(sorted[index]),
-          onDelete: onDelete == null ? null : () => onDelete!(sorted[index]),
-        ),
+        onEdit: onEdit == null ? null : () => onEdit!(sorted[index]),
+        onDelete: onDelete == null ? null : () => onDelete!(sorted[index]),
       ),
     );
   }

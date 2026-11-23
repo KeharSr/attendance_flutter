@@ -8,7 +8,7 @@ import 'package:attendance_flutter/features/overtime/presentation/view/overtime_
 import 'package:attendance_flutter/features/overtime/presentation/view/overtime_history_view.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/view_model/overtime_view_model.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/state/overtime_state.dart';
-import 'package:attendance_flutter/features/overtime/presentation/widgets/edit_overtime_dialog.dart';
+import 'package:attendance_flutter/features/overtime/presentation/view/edit_overtime_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,7 +67,152 @@ class FakeOvertime extends OvertimeViewModel {
   }
 }
 
+class EditFlowOvertime extends FakeOvertime {
+  EditFlowOvertime(this.request);
+  final OvertimeEntity request;
+  bool failSave = true;
+
+  @override
+  OvertimeState build() =>
+      OvertimeState.initial().copyWith(overtime: [request]);
+
+  @override
+  Future<void> editOvertimeRequest({
+    required String overtimeId,
+    required String workDate,
+    required String overtimeStartTime,
+    required String overtimeEndTime,
+    required String reason,
+  }) async {
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+    await super.editOvertimeRequest(
+      overtimeId: overtimeId,
+      workDate: workDate,
+      overtimeStartTime: overtimeStartTime,
+      overtimeEndTime: overtimeEndTime,
+      reason: reason,
+    );
+    if (failSave) {
+      failSave = false;
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Could not save overtime. Try again.',
+      );
+      return;
+    }
+    state = state.copyWith(
+      isLoading: false,
+      errorMessage: null,
+      successMessage: 'Overtime edit successfully.',
+      overtime: [
+        OvertimeEntity(
+          id: overtimeId,
+          userId: request.userId,
+          workDate: workDate,
+          overtimeStartTime: overtimeStartTime,
+          overtimeEndTime: overtimeEndTime,
+          reason: reason,
+          status: request.status,
+        ),
+      ],
+    );
+  }
+}
+
 void main() {
+  const pendingRequest = OvertimeEntity(
+    id: 'compact',
+    userId: '1',
+    workDate: '2026-11-23',
+    reason: 'Complete inventory review',
+    status: 'pending',
+    overtimeStartTime: '18:00',
+    overtimeEndTime: '20:30',
+  );
+
+  testWidgets(
+    'compact card opens details and exposes edit and delete directly',
+    (tester) async {
+      var views = 0;
+      var edits = 0;
+      var deletes = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: OvertimeHistoryCardWidget(
+              request: pendingRequest,
+              onView: () => views++,
+              onEdit: () => edits++,
+              onDelete: () => deletes++,
+            ),
+          ),
+        ),
+      );
+      expect(find.byTooltip('Edit request'), findsOneWidget);
+      expect(find.byTooltip('Delete request'), findsOneWidget);
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      expect(find.text('Accepted'), findsNothing);
+      await tester.tap(find.text(pendingRequest.reason));
+      expect(views, 1);
+      for (final action in ['Edit', 'Delete']) {
+        await tester.tap(find.byTooltip('$action request'));
+        await tester.pumpAndSettle();
+      }
+      expect(edits, 1);
+      expect(deletes, 1);
+      expect(views, 1);
+    },
+  );
+
+  testWidgets(
+    'pending card fits enlarged text and disables actions while loading',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.8)),
+            child: Scaffold(
+              body: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  OvertimeHistoryCardWidget(
+                    request: pendingRequest,
+                    actionsEnabled: false,
+                    onEdit: () {},
+                    onDelete: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      for (final action in ['Edit', 'Delete']) {
+        expect(
+          tester
+              .widget<IconButton>(
+                find.byWidgetPredicate(
+                  (widget) =>
+                      widget is IconButton &&
+                      widget.tooltip == '$action request',
+                ),
+              )
+              .onPressed,
+          isNull,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test('approval metadata survives API and entity conversion', () {
     final model = OvertimeApiModel.fromJson({
       'id': '7',
@@ -287,7 +432,7 @@ void main() {
           overrides: [overtimeViewModelProvider.overrideWith(() => fake)],
           child: const MaterialApp(
             home: Scaffold(
-              body: EditOvertimeDialog(
+              body: EditOvertimeView(
                 request: OvertimeEntity(
                   id: "7",
                   userId: "1",
@@ -310,6 +455,8 @@ void main() {
       expect(fields[1].controller!.text, '18:00');
       expect(fields[2].controller!.text, '20:30');
       fields[2].controller!.text = '17:00';
+      await tester.ensureVisible(find.text('Save changes'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Save changes'));
       await tester.pumpAndSettle();
       expect(
@@ -318,12 +465,89 @@ void main() {
       );
       expect(fake.editedId, isNull);
       fields[2].controller!.text = '21:15';
+      await tester.ensureVisible(find.text('Save changes'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Save changes'));
       await tester.pumpAndSettle();
       expect(fake.editedId, '7');
       expect(fake.submittedWorkDate, '2026-11-01');
       expect(fake.startTime, '18:00');
       expect(fake.endTime, '21:15');
+    },
+  );
+
+  testWidgets(
+    'edit opens prefilled, retains failed changes and preserves the create draft',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fake = EditFlowOvertime(pendingRequest);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [overtimeViewModelProvider.overrideWith(() => fake)],
+          child: const MaterialApp(home: Scaffold(body: OvertimeView())),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      fake.setWorkDate(DateTime(2026, 11, 20));
+      await tester.pumpAndSettle();
+      final draft = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      draft[1].controller!.text = '16:00';
+      draft[2].controller!.text = '17:30';
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'Unfinished new request',
+      );
+      await tester.tap(find.text('Back to requests'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Edit request'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditOvertimeView), findsOneWidget);
+      var fields = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      expect(fields[0].initialValue, 'Nov 23, 2026');
+      expect(fields[1].controller!.text, '18:00');
+      expect(fields[2].controller!.text, '20:30');
+      expect(fields[3].controller!.text, pendingRequest.reason);
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'Updated inventory review',
+      );
+      await tester.ensureVisible(find.text('Save changes'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditOvertimeView), findsOneWidget);
+      expect(find.text('Could not save overtime. Try again.'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField).last)
+            .controller!
+            .text,
+        'Updated inventory review',
+      );
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditOvertimeView), findsNothing);
+      expect(find.text('Updated inventory review'), findsOneWidget);
+      expect(fake.editedId, pendingRequest.id);
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      fields = tester
+          .widgetList<TextFormField>(find.byType(TextFormField))
+          .toList();
+      expect(fields[0].initialValue, 'Nov 20, 2026');
+      expect(fields[1].controller!.text, '16:00');
+      expect(fields[2].controller!.text, '17:30');
+      expect(fields[3].controller!.text, 'Unfinished new request');
+      expect(tester.takeException(), isNull);
     },
   );
 

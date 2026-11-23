@@ -67,6 +67,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GBN HR needs access to your location to verify attendance check-ins and show nearby services.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID or Touch ID to quickly and securely log in to your account.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

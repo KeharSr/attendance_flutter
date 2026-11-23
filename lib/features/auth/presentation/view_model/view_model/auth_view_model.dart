@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthViewModel extends Notifier<AuthState> {
   AuthViewModel();
+  int _biometricOperation = 0;
+  int _statusRequest = 0;
 
   @override
   AuthState build() {
@@ -60,13 +62,17 @@ class AuthViewModel extends Notifier<AuthState> {
     required String phone,
     required String password,
   }) async {
-    if (state.isLoading || state.isLoggingOut) return;
+    if (state.isLoading || state.isLoggingOut || state.isBiometricLoading) {
+      return;
+    }
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
       successMessage: null,
       logoutMessage: null,
     );
+    _biometricOperation++;
+    _statusRequest++;
     final result = await ref
         .read(loginUserUseCaseProvider)
         .call(LoginParams(phone: phone, password: password));
@@ -76,13 +82,6 @@ class AuthViewModel extends Notifier<AuthState> {
         state = state.copyWith(isLoading: false, errorMessage: failure.message);
       },
       (user) async {
-        await ref
-            .read(appSharedPrefsProvider)
-            .saveUserSession(
-              userId: user.id ?? '',
-              name: user.name,
-              phone: user.phone,
-            );
         if (!ref.mounted) return;
         state = state.copyWith(
           isLoading: false,
@@ -90,18 +89,28 @@ class AuthViewModel extends Notifier<AuthState> {
           user: user,
         );
         ref.read(authSessionProvider.notifier).markLoggedIn();
+        unawaited(loadBiometricStatus());
       },
     );
   }
 
-  Future<void> logoutUser() async {
-    if (state.isLoading || state.isLoggingOut) return;
+  Future<void> logoutUser() => _logout();
+
+  Future<void> _logout({bool disableBiometrics = false}) async {
+    if (!ref.read(authSessionProvider) ||
+        state.isLoading ||
+        state.isLoggingOut ||
+        state.isBiometricLoading) {
+      return;
+    }
     state = state.copyWith(
       isLoggingOut: true,
       errorMessage: null,
       successMessage: null,
       logoutMessage: null,
     );
+    _biometricOperation++;
+    _statusRequest++;
     final notifications = ref.read(notificationViewModelProvider.notifier);
     final detached = await notifications.prepareLogout();
     if (!ref.mounted || !ref.read(authSessionProvider)) return;
@@ -114,7 +123,9 @@ class AuthViewModel extends Notifier<AuthState> {
       unawaited(notifications.activate(requestPermission: false));
       return;
     }
-    final result = await ref.read(logoutUserUsecaseProvider).call();
+    final result = disableBiometrics
+        ? await ref.read(disableBiometricAndLogoutUsecaseProvider).call()
+        : await ref.read(logoutUserUsecaseProvider).call();
     if (!ref.mounted || !ref.read(authSessionProvider)) return;
     result.fold(
       (failure) {
@@ -131,9 +142,98 @@ class AuthViewModel extends Notifier<AuthState> {
   }
 
   Future<void> expireSession() async {
-    await ref.read(appSharedPrefsProvider).removeSession();
+    _biometricOperation++;
+    _statusRequest++;
+    await ref.read(clearExpiredSessionUsecaseProvider).call();
     if (!ref.mounted) return;
     _completeLogout('Your session has expired. Please sign in again.');
+  }
+
+  Future<void> loadBiometricStatus() async {
+    final request = ++_statusRequest;
+    final result = await ref.read(getBiometricStatusUsecaseProvider).call();
+    if (!ref.mounted ||
+        request != _statusRequest ||
+        state.isBiometricLoading ||
+        state.isLoggingOut) {
+      return;
+    }
+    result.fold(
+      (_) {},
+      (status) => state = state.copyWith(
+        biometricAvailable: status.available,
+        biometricEnabled: status.enabled,
+      ),
+    );
+  }
+
+  Future<void> setBiometricLoginEnabled(bool enabled) async {
+    if (state.isLoading ||
+        state.isLoggingOut ||
+        state.isBiometricLoading ||
+        !ref.read(authSessionProvider)) {
+      return;
+    }
+    if (!enabled) {
+      await _logout(disableBiometrics: true);
+      return;
+    }
+    final operation = ++_biometricOperation;
+    _statusRequest++;
+    state = state.copyWith(
+      isBiometricLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+    final result = await ref.read(enableBiometricLoginUsecaseProvider).call();
+    if (!ref.mounted || operation != _biometricOperation) return;
+    result.fold(
+      (failure) => state = state.copyWith(
+        isBiometricLoading: false,
+        errorMessage: failure.message,
+      ),
+      (enabled) => state = state.copyWith(
+        isBiometricLoading: false,
+        biometricEnabled: enabled || state.biometricEnabled,
+        biometricAvailable: enabled || state.biometricAvailable,
+        successMessage: enabled ? 'Biometric sign-in enabled.' : null,
+      ),
+    );
+  }
+
+  Future<void> loginWithBiometrics() async {
+    if (state.isLoading || state.isLoggingOut || state.isBiometricLoading) {
+      return;
+    }
+    final operation = ++_biometricOperation;
+    _statusRequest++;
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+      logoutMessage: null,
+    );
+    final result = await ref.read(loginWithBiometricsUsecaseProvider).call();
+    if (!ref.mounted || operation != _biometricOperation) return;
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        errorMessage: failure.message,
+      ),
+      (result) {
+        final user = result.user;
+        if (user == null) {
+          state = state.copyWith(isLoading: false);
+          return;
+        }
+        state = state.copyWith(
+          isLoading: false,
+          user: user,
+          successMessage: 'Login successful',
+        );
+        ref.read(authSessionProvider.notifier).markLoggedIn();
+      },
+    );
   }
 
   void _completeLogout(String message) {

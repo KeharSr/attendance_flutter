@@ -7,6 +7,7 @@ class RequestSummary extends StatelessWidget {
     required this.statuses,
     this.loading = false,
     this.unavailable = false,
+    this.compact = false,
     super.key,
   }) : _durations = null;
 
@@ -14,6 +15,7 @@ class RequestSummary extends StatelessWidget {
     required Iterable<({String status, Duration? duration})> entries,
     this.loading = false,
     this.unavailable = false,
+    this.compact = false,
     super.key,
   }) : statuses = const [],
        _durations = entries;
@@ -21,6 +23,7 @@ class RequestSummary extends StatelessWidget {
   final Iterable<String> statuses;
   final bool loading;
   final bool unavailable;
+  final bool compact;
   final Iterable<({String status, Duration? duration})>? _durations;
 
   @override
@@ -77,7 +80,13 @@ class RequestSummary extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 560 ? 4 : 2;
+        final columns =
+            constraints.maxWidth >= 560 ||
+                (compact &&
+                    constraints.maxWidth >= 340 &&
+                    MediaQuery.textScalerOf(context).scale(12) <= 14)
+            ? 4
+            : 2;
         final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
         return Wrap(
           spacing: 10,
@@ -89,17 +98,21 @@ class RequestSummary extends StatelessWidget {
                 child: Semantics(
                   container: true,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: metric.color.withValues(alpha: .04),
-                      border: Border.all(
-                        color: metric.color.withValues(alpha: .4),
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    padding: compact
+                        ? const EdgeInsets.symmetric(vertical: 6)
+                        : const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                    decoration: compact
+                        ? null
+                        : BoxDecoration(
+                            color: metric.color.withValues(alpha: .04),
+                            border: Border.all(
+                              color: metric.color.withValues(alpha: .4),
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -115,9 +128,9 @@ class RequestSummary extends StatelessWidget {
                         Text(
                           metric.value,
                           style: TextStyle(
-                            color: metric.color,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            color: compact ? AppColors.ink : metric.color,
+                            fontSize: compact ? 16 : 18,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
