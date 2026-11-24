@@ -4,6 +4,7 @@ import 'package:attendance_flutter/core/dependency_injection/dependency_injectio
 import 'package:attendance_flutter/features/missing_attendance/domain/usecase/create_missing_attendance_usecase.dart';
 import 'package:attendance_flutter/features/missing_attendance/presentation/view_model/state/missing_attendance_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:attendance_flutter/features/missing_attendance/domain/usecase/fetch_missing_attendance_usecase.dart';
 
 class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
   @override
@@ -36,6 +37,7 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
       ),
     );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -49,10 +51,35 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
           isLoading: false,
           failureMessage: null,
           successMessage: "Missing Attendance Created Successfully",
-          missingAttendance: [...state.missingAttendance, missingAttendance],
         );
       },
     );
+    if (result.isRight()) await fetchMissingAttendance();
+  }
+
+  Future<void> selectYear(int year) async {
+    if (state.isLoading || year == state.selectedYear || year < 1) return;
+    state = state.copyWith(
+      selectedYear: year,
+      missingAttendance: [],
+      summary: null,
+    );
+    await fetchMissingAttendance();
+  }
+
+  Future<void> selectMonth(int month) async {
+    if (state.isLoading ||
+        month == state.selectedMonth ||
+        month < 1 ||
+        month > 12) {
+      return;
+    }
+    state = state.copyWith(
+      selectedMonth: month,
+      missingAttendance: [],
+      summary: null,
+    );
+    await fetchMissingAttendance();
   }
 
   Future<void> fetchMissingAttendance() async {
@@ -67,8 +94,14 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
       fetchMissingAttendanceUsecaseProvider,
     );
 
-    final result = await fetchMissingAttendanceUseCase.call();
+    final result = await fetchMissingAttendanceUseCase.call(
+      FetchMissingAttendanceParams(
+        year: state.selectedYear,
+        month: state.selectedMonth,
+      ),
+    );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -77,12 +110,13 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
           successMessage: null,
         );
       },
-      (missingAttendance) {
+      (page) {
         state = state.copyWith(
           isLoading: false,
           failureMessage: null,
           successMessage: null,
-          missingAttendance: missingAttendance,
+          missingAttendance: page.requests,
+          summary: page.summary,
         );
       },
     );
@@ -113,7 +147,7 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
           ),
         );
     if (!ref.mounted) return false;
-    return result.fold(
+    final updated = result.fold(
       (failure) {
         state = state.copyWith(
           isLoading: false,
@@ -132,6 +166,8 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
         return true;
       },
     );
+    if (updated) await fetchMissingAttendance();
+    return updated;
   }
 
   Future<bool> deleteMissingAttendance({required String requestId}) async {
@@ -145,7 +181,7 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
         .read(deleteMissingAttendanceUsecaseProvider)
         .call(DeleteMissingAttendanceParams(requestId: requestId));
     if (!ref.mounted) return false;
-    return result.fold(
+    final deleted = result.fold(
       (failure) {
         state = state.copyWith(
           isLoading: false,
@@ -171,5 +207,7 @@ class MissingAttendanceViewModel extends Notifier<MissingAttendanceState> {
         return true;
       },
     );
+    if (deleted) await fetchMissingAttendance();
+    return deleted;
   }
 }

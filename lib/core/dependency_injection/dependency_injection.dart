@@ -306,7 +306,7 @@ final loginWithBiometricsUsecaseProvider = Provider(
 );
 final disableBiometricAndLogoutUsecaseProvider = Provider(
   (ref) =>
-      DisableBiometricAndLogoutUsecase(ref.read(authRepositoryImplProvider)),
+      DisableBiometricAndLogoutUsecase (ref.read(authRepositoryImplProvider)),
 );
 
 final clearExpiredSessionUsecaseProvider = Provider(

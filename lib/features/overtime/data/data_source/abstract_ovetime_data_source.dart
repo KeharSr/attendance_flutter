@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/data/model/request_list_model.dart';
 import 'package:attendance_flutter/features/overtime/data/model/overtime_api_model.dart';
 
 abstract interface class IAbstractOvertimeDataSource {
@@ -8,7 +9,10 @@ abstract interface class IAbstractOvertimeDataSource {
     required String reason,
   });
 
-  Future<List<OvertimeApiModel>> getAllOvertime();
+  Future<RequestListModel<OvertimeApiModel>> getAllOvertime({
+    required int year,
+    required int month,
+  });
 
   Future<OvertimeApiModel> editOvertime({
     required String overtimeId,

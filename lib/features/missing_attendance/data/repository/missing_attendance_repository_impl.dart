@@ -1,7 +1,7 @@
+import 'package:attendance_flutter/core/domain/entity/request_list_entity.dart';
 import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/error/failure.dart';
 import 'package:attendance_flutter/features/missing_attendance/data/data_source/abstract_miss_attendance_data_source.dart';
-import 'package:attendance_flutter/features/missing_attendance/data/model/missing_attendance_api_model.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/repository/missing_attendance_repository.dart';
 import 'package:dartz/dartz.dart';
@@ -34,13 +34,15 @@ class MissingAttendanceRepositoryImpl implements IMissingAttendanceRepository {
   }
 
   @override
-  Future<Either<Failure, List<MissingAttendanceEntity>>>
-  getMissingAttendance() async {
+  Future<Either<Failure, RequestListEntity<MissingAttendanceEntity>>>
+  getMissingAttendance({required int year, required int month}) async {
     try {
-      final response = await _missingAttendanceDataSource
-          .getMissingAttendance();
+      final response = await _missingAttendanceDataSource.getMissingAttendance(
+        year: year,
+        month: month,
+      );
 
-      return Right(MissingAttendanceApiModel.toEntityList(response));
+      return Right(response.toEntity((item) => item.toEntity()));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

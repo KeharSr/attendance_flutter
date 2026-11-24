@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/domain/entity/request_summary_entity.dart';
 import 'package:attendance_flutter/core/common/request_summary.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
@@ -15,8 +16,12 @@ class OvertimeHistoryView extends StatelessWidget {
     this.onRefresh,
     this.onEdit,
     this.onDelete,
+    this.filters,
+    this.summary,
   });
   final List<OvertimeEntity> requests;
+  final Widget? filters;
+  final RequestSummaryEntity? summary;
   final bool isLoading;
   final String? errorMessage;
   final Future<void> Function()? onRefresh;
@@ -27,12 +32,15 @@ class OvertimeHistoryView extends StatelessWidget {
     final sorted = [...requests]
       ..sort((a, b) => b.workDate.compareTo(a.workDate));
     return RequestHistoryList(
-      summary: RequestSummary.hours(
-        entries: requests.map(
-          (request) => (status: request.status, duration: request.duration),
-        ),
-        loading: isLoading,
-        unavailable: errorMessage != null,
+      summary: Column(
+        children: [
+          ?filters,
+          RequestSummary(
+            summary: summary,
+            loading: isLoading,
+            unavailable: errorMessage != null,
+          ),
+        ],
       ),
       count: sorted.length,
       loading: isLoading,

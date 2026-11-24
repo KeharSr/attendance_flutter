@@ -1,4 +1,5 @@
 import 'package:attendance_flutter/core/common/request_list_page.dart';
+import 'package:attendance_flutter/core/common/request_history_filters.dart';
 import 'package:attendance_flutter/core/common/request_dialogs.dart';
 import 'package:attendance_flutter/features/missing_attendance/domain/entity/missing_attendance_entity.dart';
 
@@ -112,6 +113,19 @@ class _MissingAttendanceViewState extends ConsumerState<MissingAttendanceView> {
         onSubmit: _submit,
       ),
       history: MissingAttendanceHistoryView(
+        summary: state.summary,
+        filters: RequestHistoryFilters(
+          keyPrefix: 'missing-attendance',
+          year: state.selectedYear,
+          month: state.selectedMonth,
+          loading: state.isLoading,
+          onYearChanged: (year) => ref
+              .read(missingAttendanceViewModelProvider.notifier)
+              .selectYear(year),
+          onMonthChanged: (month) => ref
+              .read(missingAttendanceViewModelProvider.notifier)
+              .selectMonth(month),
+        ),
         onEdit: _editMissingAttendance,
         onDelete: _deleteMissingAttendance,
         requests: state.missingAttendance,

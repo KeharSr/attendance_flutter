@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/data/model/request_list_model.dart';
 import 'package:attendance_flutter/features/leave/data/model/leave_model.dart';
 
 abstract interface class ILeaveDataSource {
@@ -7,7 +8,10 @@ abstract interface class ILeaveDataSource {
     required String reason,
   });
 
-  Future<List<LeaveModel>> getAllLeaves();
+  Future<RequestListModel<LeaveModel>> getAllLeaves({
+    required int year,
+    required int month,
+  });
 
   Future<LeaveModel> editLeave({
     required String leaveRequestId,

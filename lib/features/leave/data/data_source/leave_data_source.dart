@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/data/model/request_list_model.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
@@ -31,16 +32,18 @@ class LeaveDataSource implements ILeaveDataSource {
   }
 
   @override
-  Future<List<LeaveModel>> getAllLeaves() async {
-    final response = await _apiClient.get(ApiEndpoints.allLeaveRequest);
+  Future<RequestListModel<LeaveModel>> getAllLeaves({
+    required int year,
+    required int month,
+  }) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.allLeaveRequest(year: year, month: month),
+    );
 
-    final jsonList = response.data['data'] as List;
-
-    final result = jsonList
-        .map((json) => LeaveModel.fromJson(json as Map<String, dynamic>))
-        .toList();
-
-    return result;
+    return RequestListModel<LeaveModel>.fromJson(
+      response.data as Map<String, dynamic>,
+      LeaveModel.fromJson,
+    );
   }
 
   @override

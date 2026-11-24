@@ -1,4 +1,5 @@
 import 'package:attendance_flutter/core/common/request_list_page.dart';
+import 'package:attendance_flutter/core/common/request_history_filters.dart';
 import 'package:attendance_flutter/core/common/date_time_utils.dart';
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
@@ -81,6 +82,17 @@ class _OvertimeViewState extends ConsumerState<OvertimeView> {
         onSubmit: _submit,
       ),
       history: OvertimeHistoryView(
+        summary: overtimeState.summary,
+        filters: RequestHistoryFilters(
+          keyPrefix: 'overtime',
+          year: overtimeState.selectedYear,
+          month: overtimeState.selectedMonth,
+          loading: overtimeState.isLoading,
+          onYearChanged: (year) =>
+              ref.read(overtimeViewModelProvider.notifier).selectYear(year),
+          onMonthChanged: (month) =>
+              ref.read(overtimeViewModelProvider.notifier).selectMonth(month),
+        ),
         requests: overtimeState.overtime,
         isLoading: overtimeState.isLoading,
         errorMessage: overtimeState.errorMessage,

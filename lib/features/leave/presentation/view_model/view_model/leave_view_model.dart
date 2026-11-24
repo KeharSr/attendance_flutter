@@ -1,5 +1,6 @@
 import 'package:attendance_flutter/features/leave/domain/usecase/delete_leave_usecase.dart';
 import 'package:attendance_flutter/features/leave/domain/usecase/edit_leave_usecase.dart';
+import 'package:attendance_flutter/features/leave/domain/usecase/get_all_leave_usecase.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/domain/usecase/submit_leave_usecase.dart';
 import 'package:attendance_flutter/features/leave/presentation/view_model/state/leave_state.dart';
@@ -44,17 +45,35 @@ class LeaveViewModel extends Notifier<LeaveState> {
       SubmitLeaveParams(startDate: startDate, endDate: endDate, reason: reason),
     );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) => state = state.copyWith(
         isLoading: false,
         errorMessage: failure.message,
       ),
-      (request) => state = state.copyWith(
+      (_) => state = state.copyWith(
         isLoading: false,
-        requests: [request, ...state.requests],
         successMessage: 'Leave request submitted for review.',
       ),
     );
+    if (result.isRight()) await getAllLeaves();
+  }
+
+  Future<void> selectYear(int year) async {
+    if (state.isLoading || year == state.selectedYear || year < 1) return;
+    state = state.copyWith(selectedYear: year, requests: [], summary: null);
+    await getAllLeaves();
+  }
+
+  Future<void> selectMonth(int month) async {
+    if (state.isLoading ||
+        month == state.selectedMonth ||
+        month < 1 ||
+        month > 12) {
+      return;
+    }
+    state = state.copyWith(selectedMonth: month, requests: [], summary: null);
+    await getAllLeaves();
   }
 
   Future<void> getAllLeaves() async {
@@ -66,15 +85,21 @@ class LeaveViewModel extends Notifier<LeaveState> {
     );
     final getAllLeaveUseCase = ref.read(getAllLeaveUseCaseProvider);
 
-    final result = await getAllLeaveUseCase.call();
+    final result = await getAllLeaveUseCase.call(
+      GetAllLeaveParams(year: state.selectedYear, month: state.selectedMonth),
+    );
+    if (!ref.mounted) return;
 
     result.fold(
       (failure) => state = state.copyWith(
         isLoading: false,
         errorMessage: failure.message,
       ),
-      (requests) =>
-          state = state.copyWith(isLoading: false, requests: requests),
+      (page) => state = state.copyWith(
+        isLoading: false,
+        requests: page.requests,
+        summary: page.summary,
+      ),
     );
   }
 
@@ -101,7 +126,7 @@ class LeaveViewModel extends Notifier<LeaveState> {
           ),
         );
     if (!ref.mounted) return false;
-    return result.fold(
+    final updated = result.fold(
       (failure) {
         state = state.copyWith(isLoading: false, errorMessage: failure.message);
         return false;
@@ -119,6 +144,8 @@ class LeaveViewModel extends Notifier<LeaveState> {
         return true;
       },
     );
+    if (updated) await getAllLeaves();
+    return updated;
   }
 
   Future<bool> deleteLeave({required String leaveRequestId}) async {
@@ -132,7 +159,7 @@ class LeaveViewModel extends Notifier<LeaveState> {
         .read(deleteLeaveUsecaseProvider)
         .call(DeleteLeaveParams(leaveRequestId: leaveRequestId));
     if (!ref.mounted) return false;
-    return result.fold(
+    final deleted = result.fold(
       (failure) {
         state = state.copyWith(isLoading: false, errorMessage: failure.message);
         return false;
@@ -155,5 +182,7 @@ class LeaveViewModel extends Notifier<LeaveState> {
         return true;
       },
     );
+    if (deleted) await getAllLeaves();
+    return deleted;
   }
 }

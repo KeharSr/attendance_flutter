@@ -21,7 +21,8 @@ class ApiEndpoints {
 
   // =======================leave routes========================
   static const String leaveRequest = "$baseUrl/leave/request";
-  static const String allLeaveRequest = "$baseUrl/leave/all";
+  static String allLeaveRequest({num? year, num? month}) =>
+      "$baseUrl/leave/all?year=$year&month=$month";
   static String editLeave(String requestId) =>
       "$baseUrl/leave/request/$requestId";
   static String deleteLeave(String requestId) =>
@@ -29,7 +30,8 @@ class ApiEndpoints {
 
   // =======================overtime routes========================
   static const String overtimeRequest = "$baseUrl/overtime/request";
-  static const String fetchAllOvertime = "$baseUrl/overtime/getAllOvertime";
+  static String fetchAllOvertime({required int year, required int month}) =>
+      "$baseUrl/overtime/getAllOvertime?year=$year&month=$month";
   static String editOvertime(String requestId) =>
       "$baseUrl/overtime/request/$requestId";
   static String deleteOvertime(String requestId) =>
@@ -38,8 +40,10 @@ class ApiEndpoints {
   // =======================missing attendance routes========================
   static const String createMissingAttendance =
       "$baseUrl/missing-attendance/request";
-  static const String fetchMissingAttendance =
-      "$baseUrl/missing-attendance/get-all-request";
+  static String fetchMissingAttendance({
+    required int year,
+    required int month,
+  }) => "$baseUrl/missing-attendance/get-all-request?year=$year&month=$month";
   static String editMissingAttendance(String requestId) =>
       "$baseUrl/missing-attendance/request/$requestId";
   static String deleteMissingAttendance(String requestId) =>

@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/data/model/request_list_model.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 import 'package:attendance_flutter/features/overtime/data/data_source/abstract_ovetime_data_source.dart';
@@ -30,16 +31,18 @@ class OvertimeDataSource implements IAbstractOvertimeDataSource {
   }
 
   @override
-  Future<List<OvertimeApiModel>> getAllOvertime() async {
-    final response = await _apiClient.get(ApiEndpoints.fetchAllOvertime);
+  Future<RequestListModel<OvertimeApiModel>> getAllOvertime({
+    required int year,
+    required int month,
+  }) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.fetchAllOvertime(year: year, month: month),
+    );
 
-    final jsonList = response.data['data'] as List;
-
-    final result = jsonList
-        .map((json) => OvertimeApiModel.fromJson(json as Map<String, dynamic>))
-        .toList();
-
-    return result;
+    return RequestListModel<OvertimeApiModel>.fromJson(
+      response.data as Map<String, dynamic>,
+      OvertimeApiModel.fromJson,
+    );
   }
 
   @override

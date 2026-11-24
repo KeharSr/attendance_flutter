@@ -1,7 +1,11 @@
+import 'package:attendance_flutter/core/domain/entity/request_summary_entity.dart';
 import 'package:attendance_flutter/features/overtime/domain/entity/overtime_entity.dart';
 import 'package:equatable/equatable.dart';
 
 class OvertimeState extends Equatable {
+  final int selectedYear;
+  final int selectedMonth;
+  final RequestSummaryEntity? summary;
   final bool isLoading;
   final String? successMessage;
   final String? errorMessage;
@@ -10,6 +14,9 @@ class OvertimeState extends Equatable {
 
   const OvertimeState({
     required this.isLoading,
+    this.summary,
+    required this.selectedYear,
+    required this.selectedMonth,
     required this.successMessage,
     required this.errorMessage,
     required this.overtime,
@@ -17,7 +24,10 @@ class OvertimeState extends Equatable {
   });
 
   factory OvertimeState.initial() {
-    return const OvertimeState(
+    final now = DateTime.now();
+    return OvertimeState(
+      selectedYear: now.year,
+      selectedMonth: now.month,
       isLoading: false,
       successMessage: null,
       errorMessage: null,
@@ -27,6 +37,9 @@ class OvertimeState extends Equatable {
 
   OvertimeState copyWith({
     bool? isLoading,
+    Object? summary = _notProvided,
+    int? selectedYear,
+    int? selectedMonth,
     Object? successMessage = _notProvided,
     Object? errorMessage = _notProvided,
     List<OvertimeEntity>? overtime,
@@ -34,6 +47,11 @@ class OvertimeState extends Equatable {
   }) {
     return OvertimeState(
       isLoading: isLoading ?? this.isLoading,
+      summary: identical(summary, _notProvided)
+          ? this.summary
+          : summary as RequestSummaryEntity?,
+      selectedYear: selectedYear ?? this.selectedYear,
+      selectedMonth: selectedMonth ?? this.selectedMonth,
       successMessage: identical(successMessage, _notProvided)
           ? this.successMessage
           : successMessage as String?,
@@ -52,6 +70,9 @@ class OvertimeState extends Equatable {
   @override
   List<Object?> get props => [
     isLoading,
+    summary,
+    selectedYear,
+    selectedMonth,
     successMessage,
     errorMessage,
     overtime,

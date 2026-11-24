@@ -56,7 +56,7 @@ class _Backend {
   ) async {
     calls.add(options);
     if (options.method == 'GET') {
-      final isLeave = options.path == ApiEndpoints.allLeaveRequest;
+      final isLeave = Uri.parse(options.path).path.endsWith('/leave/all');
       final item = isLeave ? leave : missing;
       final deleted = isLeave ? deletedLeave : deletedMissing;
       handler.resolve(
@@ -64,9 +64,20 @@ class _Backend {
           requestOptions: options,
           statusCode: 200,
           data: {
+            'summary': {
+              'total_applied': deleted ? 60 : 70,
+              'total_approved': 20,
+              'total_pending': deleted ? 30 : 40,
+              'total_rejected': 10,
+            },
             'data': [
               if (!deleted) {...item},
-              {...item, 'id': isLeave ? '9' : 9, 'status': 'approved'},
+              {
+                ...item,
+                'id': isLeave ? '9' : 9,
+                'status': 'approved',
+                'reason': 'Approved request',
+              },
             ],
           },
         ),
@@ -238,6 +249,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(backend.mutations, isEmpty);
         expect(find.text('2 requests'), findsOneWidget);
+        expect(find.text('70'), findsOneWidget);
         await tapVisible(tester, find.byTooltip('Delete request'));
         await tester.pumpAndSettle();
         await tapVisible(
@@ -249,6 +261,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(backend.mutations.single.method, 'DELETE');
+        expect(find.text('60'), findsOneWidget);
         expect(
           backend.mutations.single.path,
           isLeave
@@ -330,7 +343,7 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         await mount(tester, textScale: 1.8);
-        await tester.ensureVisible(find.byTooltip('Edit request'));
+        await tester.scrollUntilVisible(find.byTooltip('Edit request'), 200);
         await tester.pumpAndSettle();
         await tapVisible(tester, find.byTooltip('Edit request'));
         await tester.pumpAndSettle();

@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/data/model/request_list_model.dart';
 import 'package:attendance_flutter/core/api/api_client.dart';
 import 'package:attendance_flutter/core/api/api_endpoints.dart';
 
@@ -31,19 +32,18 @@ class MissingAttendanceDataSource implements IMissingAttendanceDataSource {
   }
 
   @override
-  Future<List<MissingAttendanceApiModel>> getMissingAttendance() async {
-    final response = await _apiClient.get(ApiEndpoints.fetchMissingAttendance);
+  Future<RequestListModel<MissingAttendanceApiModel>> getMissingAttendance({
+    required int year,
+    required int month,
+  }) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.fetchMissingAttendance(year: year, month: month),
+    );
 
-    final jsonList = response.data["data"] as List;
-
-    final jsonData = jsonList
-        .map(
-          (json) =>
-              MissingAttendanceApiModel.fromJson(json as Map<String, dynamic>),
-        )
-        .toList();
-
-    return jsonData;
+    return RequestListModel<MissingAttendanceApiModel>.fromJson(
+      response.data as Map<String, dynamic>,
+      MissingAttendanceApiModel.fromJson,
+    );
   }
 
   @override

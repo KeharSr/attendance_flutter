@@ -1,7 +1,7 @@
+import 'package:attendance_flutter/core/domain/entity/request_list_entity.dart';
 import 'package:attendance_flutter/core/api/api_exception.dart';
 import 'package:attendance_flutter/core/error/failure.dart';
 import 'package:attendance_flutter/features/leave/data/data_source/abstract_leave_data_source.dart';
-import 'package:attendance_flutter/features/leave/data/model/leave_model.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
 import 'package:attendance_flutter/features/leave/domain/repository/leave_repository.dart';
 import 'package:dartz/dartz.dart';
@@ -30,10 +30,13 @@ class LeaveRepositoryImpl implements ILeaveRepository {
   }
 
   @override
-  Future<Either<Failure, List<LeaveEntity>>> getAllLeaves() async {
+  Future<Either<Failure, RequestListEntity<LeaveEntity>>> getAllLeaves({
+    required int year,
+    required int month,
+  }) async {
     try {
-      final result = await _dataSource.getAllLeaves();
-      return Right(LeaveModel.toEntityList(result));
+      final result = await _dataSource.getAllLeaves(year: year, month: month);
+      return Right(result.toEntity((item) => item.toEntity()));
     } catch (error) {
       return Left(ServerFailure(message: error.toString()));
     }

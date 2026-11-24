@@ -5,6 +5,8 @@ import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dar
 import 'edit_leave_view.dart';
 import '../widgets/leave_request_form.dart';
 
+import 'package:attendance_flutter/core/common/request_history_filters.dart';
+
 import 'package:attendance_flutter/core/common/app_snackbar.dart';
 import 'package:attendance_flutter/core/dependency_injection/dependency_injection.dart';
 import 'package:attendance_flutter/features/leave/presentation/view/leave_history_view.dart';
@@ -84,6 +86,17 @@ class _LeaveViewState extends ConsumerState<LeaveView> {
         }
       },
       history: LeaveHistoryView(
+        summary: state.summary,
+        filters: RequestHistoryFilters(
+          keyPrefix: 'leave',
+          year: state.selectedYear,
+          month: state.selectedMonth,
+          loading: state.isLoading,
+          onYearChanged: (year) =>
+              ref.read(leaveViewModelProvider.notifier).selectYear(year),
+          onMonthChanged: (month) =>
+              ref.read(leaveViewModelProvider.notifier).selectMonth(month),
+        ),
         onEdit: _editLeave,
         onDelete: _deleteLeave,
         requests: state.requests,

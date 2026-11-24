@@ -1,3 +1,4 @@
+import 'package:attendance_flutter/core/domain/entity/request_summary_entity.dart';
 import 'package:attendance_flutter/core/common/request_summary.dart';
 import 'package:attendance_flutter/core/common/request_ui.dart';
 import 'package:attendance_flutter/features/leave/domain/entity/leave_entity.dart';
@@ -15,8 +16,12 @@ class LeaveHistoryView extends StatelessWidget {
     this.onRefresh,
     this.onEdit,
     this.onDelete,
+    this.filters,
+    this.summary,
   });
   final List<LeaveEntity> requests;
+  final Widget? filters;
+  final RequestSummaryEntity? summary;
   final ValueChanged<LeaveEntity>? onEdit;
   final ValueChanged<LeaveEntity>? onDelete;
   final bool isLoading;
@@ -24,10 +29,15 @@ class LeaveHistoryView extends StatelessWidget {
   final Future<void> Function()? onRefresh;
   @override
   Widget build(BuildContext context) => RequestHistoryList(
-    summary: RequestSummary(
-      statuses: requests.map((request) => request.status),
-      loading: isLoading,
-      unavailable: errorMessage != null,
+    summary: Column(
+      children: [
+        ?filters,
+        RequestSummary(
+          summary: summary,
+          loading: isLoading,
+          unavailable: errorMessage != null,
+        ),
+      ],
     ),
     count: requests.length,
     loading: isLoading,

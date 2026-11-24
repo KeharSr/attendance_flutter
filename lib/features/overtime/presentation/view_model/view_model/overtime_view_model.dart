@@ -4,6 +4,7 @@ import 'package:attendance_flutter/features/overtime/domain/usecase/edit_overtim
 import 'package:attendance_flutter/features/overtime/domain/usecase/overtime_request_usecase.dart';
 import 'package:attendance_flutter/features/overtime/presentation/view_model/state/overtime_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:attendance_flutter/features/overtime/domain/usecase/get_all_overtime_request_usecase.dart';
 
 class OvertimeViewModel extends Notifier<OvertimeState> {
   @override
@@ -23,6 +24,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
     required String overtimeEndTime,
     required String reason,
   }) async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -42,6 +44,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
       ),
     );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -55,13 +58,31 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
           isLoading: false,
           successMessage: 'Overtime request submitted for review.',
           errorMessage: null,
-          overtime: [overtime, ...state.overtime],
         );
       },
     );
+    if (result.isRight()) await getAllOvertimeRequest();
+  }
+
+  Future<void> selectYear(int year) async {
+    if (state.isLoading || year == state.selectedYear || year < 1) return;
+    state = state.copyWith(selectedYear: year, overtime: [], summary: null);
+    await getAllOvertimeRequest();
+  }
+
+  Future<void> selectMonth(int month) async {
+    if (state.isLoading ||
+        month == state.selectedMonth ||
+        month < 1 ||
+        month > 12) {
+      return;
+    }
+    state = state.copyWith(selectedMonth: month, overtime: [], summary: null);
+    await getAllOvertimeRequest();
   }
 
   Future<void> getAllOvertimeRequest() async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -72,8 +93,14 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
       getAllOvertimeRequestUseCaseProvider,
     );
 
-    final result = await getAllOvertimeUsecaseProvider.call();
+    final result = await getAllOvertimeUsecaseProvider.call(
+      GetAllOvertimeParams(
+        year: state.selectedYear,
+        month: state.selectedMonth,
+      ),
+    );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -82,12 +109,13 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
           errorMessage: failure.message,
         );
       },
-      (overtime) {
+      (page) {
         state = state.copyWith(
           isLoading: false,
           successMessage: null,
           errorMessage: null,
-          overtime: overtime,
+          overtime: page.requests,
+          summary: page.summary,
         );
       },
     );
@@ -100,6 +128,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
     required String overtimeEndTime,
     required String reason,
   }) async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -120,6 +149,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
       ),
     );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -140,9 +170,11 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
         );
       },
     );
+    if (result.isRight()) await getAllOvertimeRequest();
   }
 
   Future<void> deleteOvertime({required String overtimeId}) async {
+    if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -155,6 +187,7 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
       DeleteOvertimeParams(overtimeId: overtimeId),
     );
 
+    if (!ref.mounted) return;
     result.fold(
       (failure) {
         state = state.copyWith(
@@ -177,5 +210,6 @@ class OvertimeViewModel extends Notifier<OvertimeState> {
         );
       },
     );
+    if (result.isRight()) await getAllOvertimeRequest();
   }
 }

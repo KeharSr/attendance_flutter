@@ -1,79 +1,46 @@
+import 'package:attendance_flutter/core/domain/entity/request_summary_entity.dart';
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
 
 class RequestSummary extends StatelessWidget {
   const RequestSummary({
-    required this.statuses,
+    this.summary,
     this.loading = false,
     this.unavailable = false,
     this.compact = false,
     super.key,
-  }) : _durations = null;
+  });
 
-  const RequestSummary.hours({
-    required Iterable<({String status, Duration? duration})> entries,
-    this.loading = false,
-    this.unavailable = false,
-    this.compact = false,
-    super.key,
-  }) : statuses = const [],
-       _durations = entries;
-
-  final Iterable<String> statuses;
+  final RequestSummaryEntity? summary;
   final bool loading;
   final bool unavailable;
   final bool compact;
-  final Iterable<({String status, Duration? duration})>? _durations;
 
   @override
   Widget build(BuildContext context) {
-    final entries =
-        (_durations ??
-                statuses.map((status) => (status: status, duration: null)))
-            .map(
-              (entry) => (
-                status: entry.status.trim().toLowerCase(),
-                duration: entry.duration,
-              ),
-            )
-            .toList();
-    final unknown = entries.isEmpty && (loading || unavailable);
-
-    String valueFor(bool Function(String status) matches) {
-      if (unknown) return '\u2014';
-      final matching = entries.where((entry) => matches(entry.status));
-      if (_durations == null) return '${matching.length}';
-      if (matching.any((entry) => entry.duration == null)) return '\u2014';
-      final seconds = matching.fold<int>(
-        0,
-        (total, entry) => total + entry.duration!.inSeconds,
-      );
-      final hours = (seconds / 3600)
-          .toStringAsFixed(2)
-          .replaceFirst(RegExp(r'\.?0+$'), '');
-      return '$hours ${hours == '1' ? 'hr' : 'hrs'}';
-    }
+    String value(num? total) =>
+        loading || unavailable || total == null ? '\u2014' : '$total';
 
     final metrics = [
       (
         label: 'Total applied',
-        value: valueFor((_) => true),
+        value: value(summary?.totalApplied),
         color: AppColors.blue,
       ),
       (
         label: 'Approved',
-        value: valueFor((s) => s == 'approved'),
+        value: value(summary?.totalApproved),
         color: AppColors.success,
       ),
       (
         label: 'Pending',
-        value: valueFor((s) => s == 'pending'),
+        value: value(summary?.totalPending),
         color: AppColors.accent,
       ),
       (
-        label: 'Cancelled',
-        value: valueFor((s) => s == 'cancelled' || s == 'canceled'),
+        label: 'Rejected',
+        value: value(summary?.totalRejected),
         color: AppColors.danger,
       ),
     ];
