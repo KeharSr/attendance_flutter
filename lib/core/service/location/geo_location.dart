@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 class GeoLocation {
@@ -28,12 +31,23 @@ class GeoLocation {
       );
     }
 
-    // Fetch and return the position
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 20),
-      ),
+    // Allow more time for iOS to acquire a fresh GPS fix.
+    final timeLimit = Duration(
+      seconds: defaultTargetPlatform == TargetPlatform.iOS ? 45 : 20,
     );
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: timeLimit,
+        ),
+      );
+    } on TimeoutException {
+      return Future.error(
+        'Unable to get your current location in time. '
+        'Move to an open area and try again. '
+        'Check that Precise Location is enabled in app settings.',
+      );
+    }
   }
 }
